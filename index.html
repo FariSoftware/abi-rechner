@@ -78,12 +78,29 @@
       </div>
     </div>
 
-    <!-- ── SCHRITT 3: BLOCK I NOTEN ── -->
+    <!-- ── KURSÜBERSICHT (Planung, ohne Noten) ── -->
     <div class="bg-white rounded-xl shadow p-5">
       <h2 class="font-bold text-blue-800 text-base mb-1 flex items-center gap-2">
         <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+        Kursübersicht – Block I
+        <span id="course-counter" class="ml-auto text-xs font-normal"></span>
+      </h2>
+      <p class="text-xs text-gray-500 mb-4 ml-8">Überblick über die geplanten Block-I-Kurse. Genau 40 Kurse müssen eingebracht werden.</p>
+      <div id="course-overview" class="space-y-1"></div>
+    </div>
+
+    <!-- ── DIVIDER: Notenrechner ── -->
+    <div class="flex items-center gap-3 py-1">
+      <div class="flex-1 border-t border-gray-300"></div>
+      <span class="text-sm font-bold text-gray-500 uppercase tracking-wide">Notenrechner</span>
+      <div class="flex-1 border-t border-gray-300"></div>
+    </div>
+
+    <!-- ── SCHRITT 4: BLOCK I NOTEN ── -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <h2 class="font-bold text-blue-800 text-base mb-1 flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
         Block I – Kursnoten
-        <span id="course-counter" class="ml-auto text-xs font-normal text-gray-400"></span>
       </h2>
       <p class="text-xs text-gray-500 mb-4 ml-8">Punkte 0–15 eingeben. Genau 40 Kurse fließen in die Berechnung ein.</p>
 
@@ -102,10 +119,10 @@
       <div id="block1-errors" class="mt-2 space-y-1"></div>
     </div>
 
-    <!-- ── SCHRITT 4: BLOCK II ABITURPRÜFUNG ── -->
+    <!-- ── SCHRITT 5: BLOCK II ABITURPRÜFUNG ── -->
     <div class="bg-white rounded-xl shadow p-5">
       <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">5</span>
         Block II – Abiturprüfung
       </h2>
 
@@ -606,6 +623,42 @@ function renderBasisConfig() {
   el.innerHTML = fields.length ? fields.join('') : '<p class="text-xs text-gray-400">Pflichtfächer durch LF-Wahl abgedeckt.</p>';
 }
 
+function renderCourseOverview() {
+  const subs = getBlock1Subjects();
+  const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
+
+  const counterEl = document.getElementById('course-counter');
+  const ok = totalCourses === 40;
+  counterEl.innerHTML = ok
+    ? `<span class="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full">✓ ${totalCourses} / 40 Kurse</span>`
+    : `<span class="text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full">⚠ ${totalCourses} / 40 Kurse</span>`;
+
+  const el = document.getElementById('course-overview');
+
+  // Group by type: LF / Pflicht-Basisfach
+  const rows = subs.map(sub => {
+    const tag = sub.isLF
+      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF${sub.doubled ? ' ×2' : ''}</span>`
+      : `<span class="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">Basis</span>`;
+    const hjBadges = Array.from({length: sub.hj}, (_, j) =>
+      `<span class="text-xs text-gray-500 bg-gray-100 px-1 rounded">HJ${j+1}</span>`
+    ).join(' ');
+    return `<div class="flex items-center gap-2 py-1 px-2 rounded-lg hover:bg-gray-50">
+      ${tag}
+      <span class="text-sm font-medium flex-1">${sub.name}</span>
+      <span class="text-xs text-gray-400 flex gap-1">${hjBadges}</span>
+      <span class="text-xs font-bold text-gray-600 ml-2 w-10 text-right">${sub.hj} Kurs${sub.hj !== 1 ? 'e' : ''}</span>
+    </div>`;
+  });
+
+  const summary = `<div class="mt-3 pt-3 border-t flex items-center justify-between">
+    <span class="text-sm font-semibold text-gray-600">Gesamt Block I</span>
+    <span class="font-bold ${ok ? 'text-green-700' : 'text-orange-600'}">${totalCourses} / 40 Kurse ${ok ? '✓' : '→ ' + (40 - totalCourses) + ' fehlen'}</span>
+  </div>`;
+
+  el.innerHTML = rows.join('') + summary;
+}
+
 function renderBlock1() {
   const subs = getBlock1Subjects();
   const el = document.getElementById('block1-rows');
@@ -774,6 +827,7 @@ function renderAll() {
   renderMPFSelects();
   renderDoubleSelects();
   renderBasisConfig();
+  renderCourseOverview();
   renderBlock1();
   renderBlock2();
   renderResult();
