@@ -462,8 +462,10 @@ function validateConfig() {
   const errors = [];
   const lfs = state.lf.filter(Boolean);
 
-  if (lfs.length < 3 || new Set(lfs).size < 3) {
-    errors.push({ el: 'lf', msg: 'Bitte 3 verschiedene Leistungsfächer wählen.' });
+  if (lfs.length < 3) {
+    errors.push({ el: 'lf', msg: 'Bitte 3 Leistungsfächer wählen.' });
+  } else if (new Set(lfs).size < 3) {
+    errors.push({ el: 'lf', msg: 'Alle 3 Leistungsfächer müssen verschieden sein.' });
   }
 
   // 2 of 3 must be core-eligible
@@ -504,8 +506,8 @@ function renderLFSelects() {
   const el = document.getElementById('lf-selects');
   el.innerHTML = [0, 1, 2].map(i => {
     const val = state.lf[i] || '';
-    const others = state.lf.filter((_, j) => j !== i).filter(Boolean);
-    const opts = SUBJECTS.filter(s => s.lfOk && !others.includes(s.id))
+    // Show ALL lfOk subjects in every dropdown; duplicates are caught by validation
+    const opts = SUBJECTS.filter(s => s.lfOk)
       .map(s => `<option value="${s.id}" ${s.id === val ? 'selected' : ''}>${s.name}</option>`).join('');
     const afLabel = val ? `<span class="text-xs text-gray-400 ml-1">AF ${subjectAF(val) || '–'}</span>` : '';
     return `<div>
@@ -523,8 +525,8 @@ function renderMPFSelects() {
   const lfs = state.lf.filter(Boolean);
   el.innerHTML = [0, 1].map(i => {
     const val = state.mpf[i] || '';
-    const others = [...lfs, ...state.mpf.filter((_, j) => j !== i)];
-    const opts = SUBJECTS.filter(s => !others.includes(s.id))
+    // Exclude LFs (they're schriftlich, not mündlich); duplicates caught by validation
+    const opts = SUBJECTS.filter(s => !lfs.includes(s.id))
       .map(s => `<option value="${s.id}" ${s.id === val ? 'selected' : ''}>${s.name}</option>`).join('');
     return `<div>
       <label class="text-xs font-semibold text-gray-500 mb-1 block">mPF ${i + 1}</label>
