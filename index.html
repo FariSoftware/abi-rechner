@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abitur BW 2028 – Notenrechner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type=number] { -moz-appearance: textfield; }
+    .pts-input {
+      width: 3rem; text-align: center; border: 1px solid #d1d5db;
+      border-radius: 0.375rem; padding: 0.25rem 0;
+      font-size: 0.9rem; font-weight: 600;
+    }
+    .pts-input:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+    .badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 2.2rem; height: 1.4rem; border-radius: 9999px;
+      font-size: 0.65rem; font-weight: 700; padding: 0 0.35rem;
+    }
+    .subject-row { display: grid; grid-template-columns: 1fr repeat(4, auto) auto auto; gap: 0.5rem; align-items: center; }
+    .subject-row-2hj { display: grid; grid-template-columns: 1fr repeat(2, auto) auto auto; gap: 0.5rem; align-items: center; }
+    @media (max-width: 640px) {
+      .subject-row, .subject-row-2hj { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-gray-800">
+
+<header class="bg-blue-800 text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-4">
+    <h1 class="text-xl font-bold">🎓 Abitur BW 2028 – Notenrechner</h1>
+    <p class="text-blue-200 text-sm mt-0.5">Allgemeinbildendes Gymnasium · Qualifikationsphase · Alle Daten bleiben lokal in deinem Browser</p>
+  </div>
+</header>
+
+<div class="max-w-7xl mx-auto p-3 lg:flex lg:gap-5 lg:items-start">
+
+  <!-- ══════════════════════════════════════════════════ MAIN ══ -->
+  <div class="flex-1 min-w-0 space-y-4">
+
+    <!-- ── SCHRITT 1: LEISTUNGSFÄCHER ── -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+        Leistungsfächer wählen
+      </h2>
+      <p class="text-xs text-gray-500 mb-3">3 Leistungsfächer · 2 davon müssen aus Deutsch, Mathe, Fremdsprache oder Naturwissenschaft stammen</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="lf-selects"></div>
+      <div id="lf-errors" class="mt-2 space-y-1"></div>
+    </div>
+
+    <!-- ── SCHRITT 2: KONFIGURATION ── -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+        Prüfungskonfiguration
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- mündliche PFs -->
+        <div>
+          <p class="text-sm font-semibold text-gray-700 mb-2">Mündliche Prüfungsfächer <span class="text-gray-400 font-normal">(2 aus Basisfächern)</span></p>
+          <div class="space-y-2" id="mpf-selects"></div>
+          <div id="mpf-errors" class="mt-1 space-y-1"></div>
+        </div>
+        <!-- Doppelgewichtung -->
+        <div>
+          <p class="text-sm font-semibold text-gray-700 mb-2">Doppelt gewichtete LFs in Block I <span class="text-gray-400 font-normal">(2 von 3 wählen)</span></p>
+          <div class="space-y-1" id="double-selects"></div>
+        </div>
+      </div>
+      <!-- Basisfach-Konfiguration -->
+      <div class="mt-4 pt-4 border-t border-gray-100">
+        <p class="text-sm font-semibold text-gray-700 mb-2">Pflicht-Basisfächer <span class="text-gray-400 font-normal">(für Block I)</span></p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="basis-config"></div>
+      </div>
+    </div>
+
+    <!-- ── SCHRITT 3: BLOCK I NOTEN ── -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <h2 class="font-bold text-blue-800 text-base mb-1 flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+        Block I – Kursnoten
+        <span id="course-counter" class="ml-auto text-xs font-normal text-gray-400"></span>
+      </h2>
+      <p class="text-xs text-gray-500 mb-4 ml-8">Punkte 0–15 eingeben. Genau 40 Kurse fließen in die Berechnung ein.</p>
+
+      <!-- Column headers -->
+      <div class="hidden sm:grid text-xs text-gray-400 font-semibold mb-1 px-1" style="grid-template-columns: 1fr 3.5rem 3.5rem 3.5rem 3.5rem 2.5rem 4rem">
+        <span>Fach</span>
+        <span class="text-center">HJ 1</span>
+        <span class="text-center">HJ 2</span>
+        <span class="text-center">HJ 3</span>
+        <span class="text-center">HJ 4</span>
+        <span class="text-center">Σ</span>
+        <span class="text-center">Ø Note</span>
+      </div>
+
+      <div id="block1-rows" class="space-y-1"></div>
+      <div id="block1-errors" class="mt-2 space-y-1"></div>
+    </div>
+
+    <!-- ── SCHRITT 4: BLOCK II ABITURPRÜFUNG ── -->
+    <div class="bg-white rounded-xl shadow p-5">
+      <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+        Block II – Abiturprüfung
+      </h2>
+
+      <div class="hidden sm:grid text-xs text-gray-400 font-semibold mb-2 px-1" style="grid-template-columns:1fr 5rem 5rem 1fr 4rem">
+        <span>Fach</span><span class="text-center">Schriftlich</span><span class="text-center">Mündlich</span><span></span><span class="text-center">Wertung</span>
+      </div>
+
+      <div id="block2-rows" class="space-y-2"></div>
+    </div>
+
+  </div><!-- /main -->
+
+  <!-- ══════════════════════════════════════════════════ SIDEBAR ══ -->
+  <div class="w-full lg:w-64 flex-shrink-0 mt-4 lg:mt-0">
+    <div class="lg:sticky lg:top-4 space-y-3">
+
+      <!-- Result card -->
+      <div class="bg-white rounded-xl shadow p-4">
+        <h3 class="font-bold text-blue-800 text-sm mb-3">Ergebnis</h3>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Block I</span>
+            <span id="r-b1" class="font-bold text-blue-700">–</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Block II</span>
+            <span id="r-b2" class="font-bold text-blue-700">–</span>
+          </div>
+          <div class="border-t pt-2 flex justify-between font-semibold">
+            <span>Gesamt</span>
+            <span id="r-total" class="text-blue-800">–</span>
+          </div>
+        </div>
+        <div class="mt-3 bg-blue-50 rounded-lg p-3 text-center">
+          <p class="text-xs text-gray-400 mb-1">Abiturnote</p>
+          <p id="r-note" class="text-4xl font-black text-blue-800">–</p>
+        </div>
+        <div id="r-status" class="mt-2 text-center text-xs font-bold"></div>
+      </div>
+
+      <!-- Breakdown -->
+      <div class="bg-white rounded-xl shadow p-4 text-xs">
+        <h3 class="font-semibold text-gray-700 mb-2">Aufschlüsselung Block II</h3>
+        <div id="r-b2-detail" class="space-y-1 text-gray-600"></div>
+      </div>
+
+      <!-- Warnings -->
+      <div id="r-warnings" class="bg-white rounded-xl shadow p-4 text-xs hidden">
+        <h3 class="font-semibold text-orange-700 mb-2">⚠ Hinweise</h3>
+        <div id="r-warnings-list" class="space-y-1 text-gray-700"></div>
+      </div>
+
+      <p class="text-xs text-gray-400 text-center px-2">Keine Daten werden übertragen. Alles läuft lokal in deinem Browser.</p>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════
+
+const AF = { I: 1, II: 2, III: 3, NONE: 0 };
+
+const SUBJECTS = [
+  // AF I
+  { id: 'deutsch',          name: 'Deutsch',           af: AF.I,   lfOk: true,  isFS: false, isNW: false },
+  { id: 'englisch',         name: 'Englisch',           af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'franzoesisch',     name: 'Französisch',        af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'latein',           name: 'Latein',             af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'spanisch',         name: 'Spanisch',           af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'russisch',         name: 'Russisch',           af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'griechisch',       name: 'Griechisch',         af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'italienisch',      name: 'Italienisch',        af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'chinesisch',       name: 'Chinesisch',         af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
+  { id: 'musik',            name: 'Musik',              af: AF.I,   lfOk: true,  isFS: false, isNW: false },
+  { id: 'kunst',            name: 'Bildende Kunst',     af: AF.I,   lfOk: true,  isFS: false, isNW: false },
+  // AF II
+  { id: 'geschichte',       name: 'Geschichte',         af: AF.II,  lfOk: true,  isFS: false, isNW: false },
+  { id: 'geographie',       name: 'Geographie',         af: AF.II,  lfOk: true,  isFS: false, isNW: false },
+  { id: 'gemeinschaftskunde', name: 'Gemeinschaftskunde', af: AF.II, lfOk: true, isFS: false, isNW: false },
+  { id: 'wirtschaft',       name: 'Wirtschaft',         af: AF.II,  lfOk: true,  isFS: false, isNW: false },
+  { id: 'religion',         name: 'Rel./Ethik',         af: AF.II,  lfOk: true,  isFS: false, isNW: false },
+  // AF III
+  { id: 'mathematik',       name: 'Mathematik',         af: AF.III, lfOk: true,  isFS: false, isNW: false },
+  { id: 'biologie',         name: 'Biologie',           af: AF.III, lfOk: true,  isFS: false, isNW: true  },
+  { id: 'chemie',           name: 'Chemie',             af: AF.III, lfOk: true,  isFS: false, isNW: true  },
+  { id: 'physik',           name: 'Physik',             af: AF.III, lfOk: true,  isFS: false, isNW: true  },
+  { id: 'nwt',              name: 'NwT',                af: AF.III, lfOk: false, isFS: false, isNW: false },
+  { id: 'informatik',       name: 'Informatik',         af: AF.III, lfOk: false, isFS: false, isNW: false },
+  // NONE
+  { id: 'sport',            name: 'Sport',              af: AF.NONE, lfOk: true, isFS: false, isNW: false },
+];
+
+const subjectMap = Object.fromEntries(SUBJECTS.map(s => [s.id, s]));
+
+const GRADE_TABLE = [
+  [900,823,'1.0'],[822,805,'1.1'],[804,787,'1.2'],[786,769,'1.3'],[768,751,'1.4'],
+  [750,733,'1.5'],[732,715,'1.6'],[714,697,'1.7'],[696,679,'1.8'],[678,661,'1.9'],
+  [660,643,'2.0'],[642,625,'2.1'],[624,607,'2.2'],[606,589,'2.3'],[588,571,'2.4'],
+  [570,553,'2.5'],[552,535,'2.6'],[534,517,'2.7'],[516,499,'2.8'],[498,481,'2.9'],
+  [480,463,'3.0'],[462,445,'3.1'],[444,427,'3.2'],[426,409,'3.3'],[408,391,'3.4'],
+  [390,373,'3.5'],[372,355,'3.6'],[354,337,'3.7'],[336,319,'3.8'],[318,301,'3.9'],
+  [300,300,'4.0'],
+];
+
+const POINTS_TO_NOTE = ['6','5−','5','5+','4−','4','4+','3−','3','3+','2−','2','2+','1−','1','1+'];
+
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+
+const state = {
+  lf: ['deutsch', 'mathematik', 'englisch'],
+  mpf: ['geschichte', 'biologie'],
+  doubled: ['deutsch', 'mathematik'],
+  // Basisfach choices
+  fs1: 'englisch',       // 1. Fremdsprache (if not LF)
+  nw1: 'biologie',       // Naturwissenschaft (if not LF)
+  kunstMusik: 'kunst',   // Kunst oder Musik
+  // Grades: { key: number } where key = subjectId_hj (1–4)
+  grades: {},
+  // Block II
+  b2: [
+    { schriftlich: null, hasMuendlich: false, muendlich: null },
+    { schriftlich: null, hasMuendlich: false, muendlich: null },
+    { schriftlich: null, hasMuendlich: false, muendlich: null },
+  ],
+  b2mpf: [null, null],
+};
+
+// ══════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════
+
+function subjectName(id) { return subjectMap[id] ? subjectMap[id].name : id; }
+function subjectAF(id) { return subjectMap[id] ? subjectMap[id].af : AF.NONE; }
+function isLFEligible(id) { return subjectMap[id]?.lfOk ?? false; }
+function isCoreEligible(id) {
+  const s = subjectMap[id];
+  if (!s) return false;
+  return id === 'deutsch' || id === 'mathematik' || s.isFS || s.isNW;
+}
+
+function gradeBadgeHtml(pts) {
+  if (pts === null || pts === undefined || pts === '') return '<span class="badge bg-gray-100 text-gray-400">–</span>';
+  const p = Math.max(0, Math.min(15, parseInt(pts)));
+  const note = POINTS_TO_NOTE[p];
+  let cls;
+  if (p >= 13) cls = 'bg-green-100 text-green-800';
+  else if (p >= 10) cls = 'bg-teal-100 text-teal-800';
+  else if (p >= 7)  cls = 'bg-yellow-100 text-yellow-800';
+  else if (p >= 5)  cls = 'bg-orange-100 text-orange-800';
+  else if (p >= 1)  cls = 'bg-red-100 text-red-800';
+  else              cls = 'bg-red-200 text-red-900';
+  return `<span class="badge ${cls}">${note}</span>`;
+}
+
+function ptVal(key) {
+  const v = state.grades[key];
+  if (v === undefined || v === null || v === '') return null;
+  return Math.max(0, Math.min(15, parseInt(v)));
+}
+
+function subjectOpts(excludeIds = [], onlyLF = false) {
+  return SUBJECTS.filter(s => !excludeIds.includes(s.id) && (!onlyLF || s.lfOk))
+    .map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function errorEl(msg, type = 'error') {
+  const cls = type === 'warn' ? 'bg-yellow-50 text-yellow-800 border-yellow-200' : 'bg-red-50 text-red-800 border-red-200';
+  return `<div class="text-xs px-3 py-1.5 rounded border ${cls}">${msg}</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BLOCK I SUBJECT LIST (auto-generated from state)
+// ══════════════════════════════════════════════════════════════
+
+function getBlock1Subjects() {
+  const lfIds = state.lf.filter(Boolean);
+  const subjects = [];
+
+  // 3 LFs
+  for (const id of lfIds) {
+    if (id) subjects.push({ id, hj: 4, isLF: true, doubled: state.doubled.includes(id) });
+  }
+
+  // Required non-LF subjects
+  const addIfNotLF = (id, hj) => {
+    if (id && !lfIds.includes(id) && !subjects.find(s => s.id === id)) {
+      subjects.push({ id, hj, isLF: false, doubled: false });
+    }
+  };
+
+  addIfNotLF('deutsch', 4);
+  addIfNotLF('mathematik', 4);
+
+  // 1. Fremdsprache
+  const fs1 = lfIds.find(id => subjectMap[id]?.isFS) || (!lfIds.includes(state.fs1) ? state.fs1 : null);
+  if (fs1 && !lfIds.includes(fs1)) addIfNotLF(fs1, 4);
+
+  // Naturwissenschaft
+  const nw1 = lfIds.find(id => subjectMap[id]?.isNW) || (!lfIds.includes(state.nw1) ? state.nw1 : null);
+  if (nw1 && !lfIds.includes(nw1)) addIfNotLF(nw1, 4);
+
+  addIfNotLF('geschichte', 4);
+
+  // Geographie & Gemeinschaftskunde — 2 courses each (4 if chosen as mPF)
+  const geo_hj = state.mpf.includes('geographie') ? 4 : 2;
+  const gk_hj  = state.mpf.includes('gemeinschaftskunde') ? 4 : 2;
+  addIfNotLF('geographie', geo_hj);
+  addIfNotLF('gemeinschaftskunde', gk_hj);
+
+  // Kunst oder Musik
+  const km = state.kunstMusik || 'kunst';
+  addIfNotLF(km, 2);
+
+  // Religionslehre/Ethik
+  addIfNotLF('religion', 2);
+
+  // mündliche PFs (if not already in list)
+  for (const id of state.mpf) {
+    if (id && !subjects.find(s => s.id === id)) {
+      subjects.push({ id, hj: 4, isLF: false, doubled: false });
+    }
+  }
+
+  // Fill to 40 with Sport
+  const total = subjects.reduce((sum, s) => sum + s.hj, 0);
+  if (total < 40) {
+    const needed = 40 - total;
+    if (!subjects.find(s => s.id === 'sport')) {
+      subjects.push({ id: 'sport', hj: Math.min(needed, 4), isLF: false, doubled: false });
+    }
+  }
+
+  return subjects;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CALCULATION
+// ══════════════════════════════════════════════════════════════
+
+function calcBlockI() {
+  const subs = getBlock1Subjects();
+  let sumAll = 0, sumDoubled = 0, totalCourses = 0;
+  let unterpunktet = 0, unterpunktetLF = 0, hasZero = false;
+  const issues = [];
+
+  for (const sub of subs) {
+    for (let hj = 1; hj <= sub.hj; hj++) {
+      const v = ptVal(`${sub.id}_${hj}`);
+      const pts = v === null ? 0 : v;
+      sumAll += pts;
+      totalCourses++;
+      if (sub.doubled) sumDoubled += pts;
+      if (pts < 5) {
+        unterpunktet++;
+        if (sub.isLF) unterpunktetLF++;
+      }
+      if (pts === 0) hasZero = true;
+    }
+  }
+
+  // Normalize to 40 courses for formula
+  const b1 = totalCourses === 48
+    ? Math.round((sumAll + sumDoubled) * 40 / 48)
+    : Math.round((sumAll + sumDoubled) * 40 / (totalCourses + (state.doubled.length * 4)));
+
+  // Use correct formula regardless
+  const doubledCount = state.doubled.filter(Boolean).length * 4;
+  const denominator = totalCourses + doubledCount;
+  const block1 = Math.round((sumAll + sumDoubled) * 40 / denominator);
+
+  if (unterpunktet > 8) issues.push(`Block I: ${unterpunktet} Kurse unter 5 Punkten (max. 8 erlaubt)`);
+  if (unterpunktetLF > 3) issues.push(`Block I: ${unterpunktetLF} LF-Kurse unter 5 Punkten (max. 3 erlaubt)`);
+  if (hasZero) issues.push('Block I: Kein Kurs darf 0 Punkte haben');
+  if (block1 < 200) issues.push(`Block I: Mindestens 200 Punkte nötig (aktuell ${block1})`);
+
+  return { block1, totalCourses, sumAll, issues };
+}
+
+function calcBlockII() {
+  const lfs = state.lf.filter(Boolean);
+  const issues = [];
+  const detail = [];
+  let total = 0;
+  let subScores = [];
+
+  // LF schriftlich (+ optional mündlich)
+  for (let i = 0; i < 3; i++) {
+    const b = state.b2[i];
+    const s = b.schriftlich !== null ? Math.max(0, Math.min(15, parseInt(b.schriftlich) || 0)) : null;
+    const m = (b.hasMuendlich && b.muendlich !== null) ? Math.max(0, Math.min(15, parseInt(b.muendlich) || 0)) : null;
+
+    let pts4;
+    if (s === null && m === null) {
+      pts4 = 0;
+      detail.push({ name: subjectName(lfs[i]), pts: 0, raw: '(leer)', ok: false });
+    } else if (m !== null && s !== null) {
+      const pf = (2 * s + m) / 3;
+      pts4 = Math.round(pf * 4);
+      detail.push({ name: subjectName(lfs[i]), pts: pts4, raw: `(2×${s} + ${m}) / 3 × 4 = ${pts4}`, ok: pts4 >= 4 });
+    } else {
+      const base = s !== null ? s : m;
+      pts4 = base * 4;
+      detail.push({ name: subjectName(lfs[i]), pts: pts4, raw: `${base} × 4 = ${pts4}`, ok: pts4 >= 4 });
+    }
+
+    total += pts4;
+    subScores.push(pts4);
+  }
+
+  // mündliche PFs
+  for (let i = 0; i < 2; i++) {
+    const v = state.b2mpf[i];
+    const pts = v !== null ? Math.max(0, Math.min(15, parseInt(v) || 0)) : null;
+    const pts4 = pts !== null ? pts * 4 : 0;
+    total += pts4;
+    subScores.push(pts4);
+    detail.push({
+      name: subjectName(state.mpf[i] || '?'),
+      pts: pts4,
+      raw: pts !== null ? `${pts} × 4 = ${pts4}` : '(leer)',
+      ok: pts !== null && pts4 >= 4,
+    });
+  }
+
+  // Validations
+  if (total < 100) issues.push(`Block II: Mindestens 100 Punkte nötig (aktuell ${total})`);
+
+  const above20 = subScores.filter(s => s >= 20).length;
+  if (above20 < 3) issues.push(`Block II: Mind. 3 Fächer ≥ 20 Punkte nötig (aktuell ${above20})`);
+
+  // 2 of the ≥20 must be LF
+  const lfAbove20 = subScores.slice(0, 3).filter(s => s >= 20).length;
+  if (above20 >= 3 && lfAbove20 < 2) issues.push('Block II: Mind. 2 der 3 LFs müssen ≥ 20 Punkte erreichen');
+
+  const below4 = subScores.filter(s => s < 4).length;
+  if (below4 > 0) issues.push(`Block II: Alle Prüfungsfächer müssen ≥ 4 Punkte (vierfach) erreichen`);
+
+  return { block2: total, detail, issues };
+}
+
+function getGrade(total) {
+  for (const [hi, lo, note] of GRADE_TABLE) {
+    if (total >= lo && total <= hi) return note;
+  }
+  return total > 900 ? '1.0' : null;
+}
+
+function validateConfig() {
+  const errors = [];
+  const lfs = state.lf.filter(Boolean);
+
+  if (lfs.length < 3 || new Set(lfs).size < 3) {
+    errors.push({ el: 'lf', msg: 'Bitte 3 verschiedene Leistungsfächer wählen.' });
+  }
+
+  // 2 of 3 must be core-eligible
+  const coreCount = lfs.filter(isCoreEligible).length;
+  if (lfs.length === 3 && coreCount < 2) {
+    errors.push({ el: 'lf', msg: 'Mind. 2 LFs müssen aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft stammen.' });
+  }
+
+  // All 3 AF covered in Abi
+  const abiSubjects = [...lfs, ...state.mpf.filter(Boolean)];
+  const afs = new Set(abiSubjects.map(subjectAF).filter(a => a > 0));
+  if (afs.size < 3 && lfs.length === 3) {
+    errors.push({ el: 'mpf', msg: 'Die Abiturprüfung muss alle 3 Aufgabenfelder abdecken.' });
+  }
+
+  // Deutsch + Mathe must be in Abi
+  if (lfs.length === 3 && !abiSubjects.includes('deutsch')) {
+    errors.push({ el: 'mpf', msg: 'Deutsch muss Prüfungsfach sein (schriftlich als LF oder mündlich).' });
+  }
+  if (lfs.length === 3 && !abiSubjects.includes('mathematik')) {
+    errors.push({ el: 'mpf', msg: 'Mathematik muss Prüfungsfach sein (schriftlich als LF oder mündlich).' });
+  }
+
+  // doubled: must pick exactly 2 of 3 LFs
+  const validDoubled = state.doubled.filter(id => lfs.includes(id));
+  if (validDoubled.length !== 2) {
+    errors.push({ el: 'double', msg: 'Bitte genau 2 Leistungsfächer für Doppelgewichtung wählen.' });
+  }
+
+  return errors;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════════════
+
+function renderLFSelects() {
+  const el = document.getElementById('lf-selects');
+  el.innerHTML = [0, 1, 2].map(i => {
+    const val = state.lf[i] || '';
+    const others = state.lf.filter((_, j) => j !== i).filter(Boolean);
+    const opts = SUBJECTS.filter(s => s.lfOk && !others.includes(s.id))
+      .map(s => `<option value="${s.id}" ${s.id === val ? 'selected' : ''}>${s.name}</option>`).join('');
+    const afLabel = val ? `<span class="text-xs text-gray-400 ml-1">AF ${subjectAF(val) || '–'}</span>` : '';
+    return `<div>
+      <label class="text-xs font-semibold text-gray-600 mb-1 block">LF ${i + 1} ${afLabel}</label>
+      <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+              onchange="setLF(${i}, this.value)">
+        <option value="">– wählen –</option>${opts}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function renderMPFSelects() {
+  const el = document.getElementById('mpf-selects');
+  const lfs = state.lf.filter(Boolean);
+  el.innerHTML = [0, 1].map(i => {
+    const val = state.mpf[i] || '';
+    const others = [...lfs, ...state.mpf.filter((_, j) => j !== i)];
+    const opts = SUBJECTS.filter(s => !others.includes(s.id))
+      .map(s => `<option value="${s.id}" ${s.id === val ? 'selected' : ''}>${s.name}</option>`).join('');
+    return `<div>
+      <label class="text-xs font-semibold text-gray-500 mb-1 block">mPF ${i + 1}</label>
+      <select class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-400"
+              onchange="setMPF(${i}, this.value)">
+        <option value="">– wählen –</option>${opts}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function renderDoubleSelects() {
+  const el = document.getElementById('double-selects');
+  const lfs = state.lf.filter(Boolean);
+  if (lfs.length < 3) {
+    el.innerHTML = '<p class="text-xs text-gray-400">Erst alle 3 LFs wählen.</p>';
+    return;
+  }
+  el.innerHTML = lfs.map(id => {
+    const checked = state.doubled.includes(id);
+    const disabled = !checked && state.doubled.length >= 2 ? 'opacity-50 cursor-not-allowed' : '';
+    return `<label class="flex items-center gap-2 cursor-pointer ${disabled}">
+      <input type="checkbox" value="${id}" ${checked ? 'checked' : ''}
+             ${!checked && state.doubled.length >= 2 ? 'disabled' : ''}
+             onchange="toggleDoubled('${id}', this.checked)"
+             class="w-4 h-4 rounded text-blue-600">
+      <span class="text-sm">${subjectName(id)}</span>
+      ${checked ? '<span class="text-xs text-blue-600 font-semibold">× 2</span>' : ''}
+    </label>`;
+  }).join('');
+}
+
+function renderBasisConfig() {
+  const el = document.getElementById('basis-config');
+  const lfs = state.lf.filter(Boolean);
+
+  const fields = [];
+
+  // 1. Fremdsprache (only if no LF is a FS)
+  const hasLFFS = lfs.some(id => subjectMap[id]?.isFS);
+  if (!hasLFFS) {
+    const fsOpts = SUBJECTS.filter(s => s.isFS && !lfs.includes(s.id))
+      .map(s => `<option value="${s.id}" ${s.id === state.fs1 ? 'selected' : ''}>${s.name}</option>`).join('');
+    fields.push(`<div>
+      <label class="text-xs font-semibold text-gray-600 mb-1 block">1. Fremdsprache (Basisfach)</label>
+      <select class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm" onchange="state.fs1=this.value;renderAll()">
+        ${fsOpts}
+      </select>
+    </div>`);
+  }
+
+  // Naturwissenschaft (only if no LF is NW)
+  const hasLFNW = lfs.some(id => subjectMap[id]?.isNW);
+  if (!hasLFNW) {
+    const nwOpts = SUBJECTS.filter(s => s.isNW && !lfs.includes(s.id))
+      .map(s => `<option value="${s.id}" ${s.id === state.nw1 ? 'selected' : ''}>${s.name}</option>`).join('');
+    fields.push(`<div>
+      <label class="text-xs font-semibold text-gray-600 mb-1 block">Naturwissenschaft (Basisfach)</label>
+      <select class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm" onchange="state.nw1=this.value;renderAll()">
+        ${nwOpts}
+      </select>
+    </div>`);
+  }
+
+  // Kunst oder Musik
+  const kmOpts = ['kunst','musik'].filter(id => !lfs.includes(id))
+    .map(id => `<option value="${id}" ${id === state.kunstMusik ? 'selected' : ''}>${subjectName(id)}</option>`).join('');
+  if (kmOpts) {
+    fields.push(`<div>
+      <label class="text-xs font-semibold text-gray-600 mb-1 block">Kunst oder Musik</label>
+      <select class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm" onchange="state.kunstMusik=this.value;renderAll()">
+        ${kmOpts}
+      </select>
+    </div>`);
+  }
+
+  el.innerHTML = fields.length ? fields.join('') : '<p class="text-xs text-gray-400">Pflichtfächer durch LF-Wahl abgedeckt.</p>';
+}
+
+function renderBlock1() {
+  const subs = getBlock1Subjects();
+  const el = document.getElementById('block1-rows');
+  const counterEl = document.getElementById('course-counter');
+
+  const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
+  const counterColor = totalCourses === 40 ? 'text-green-600' : 'text-orange-600';
+  counterEl.innerHTML = `<span class="${counterColor} font-semibold">${totalCourses} / 40 Kurse</span>`;
+
+  el.innerHTML = subs.map(sub => {
+    const rowBg = sub.isLF ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50';
+    const lfBadge = sub.isLF ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1 rounded">LF${sub.doubled ? ' ×2' : ''}</span>` : '';
+    const sum = Array.from({length: sub.hj}, (_, j) => ptVal(`${sub.id}_${j+1}`) ?? 0).reduce((a, b) => a + b, 0);
+    const avg = sub.hj > 0 ? sum / sub.hj : 0;
+    const avgNote = POINTS_TO_NOTE[Math.round(avg)] || '–';
+
+    const inputs = Array.from({length: sub.hj}, (_, j) => {
+      const key = `${sub.id}_${j+1}`;
+      const v = state.grades[key] ?? '';
+      return `<div class="flex flex-col items-center gap-0.5">
+        <span class="text-xs text-gray-400 sm:hidden">HJ${j+1}</span>
+        <input type="number" min="0" max="15" value="${v}" placeholder="–"
+               class="pts-input ${sub.isLF ? 'border-blue-200' : ''}"
+               onchange="setGrade('${key}', this.value); this.nextElementSibling.innerHTML = gradeBadgeHtml(this.value)">
+        <span class="text-xs">${gradeBadgeHtml(v)}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="${rowBg} rounded-lg px-3 py-2 grid gap-2 items-center"
+                 style="grid-template-columns: 1fr repeat(${sub.hj}, 3.5rem) 2rem 3.5rem">
+      <span class="text-sm font-medium flex items-center gap-1">${sub.name} ${lfBadge}</span>
+      ${inputs}
+      <span class="text-xs text-gray-500 text-center font-semibold">${sum}</span>
+      <span class="text-xs text-center font-semibold text-gray-600">${avgNote}</span>
+    </div>`;
+  }).join('');
+
+  // errors
+  const errEl = document.getElementById('block1-errors');
+  const { issues } = calcBlockI();
+  errEl.innerHTML = issues.map(m => errorEl(m)).join('');
+}
+
+function renderBlock2() {
+  const lfs = state.lf.filter(Boolean);
+  const el = document.getElementById('block2-rows');
+
+  const lfRows = [0, 1, 2].map(i => {
+    const id = lfs[i] || '';
+    const b = state.b2[i];
+    const s = b.schriftlich ?? '';
+    const m = b.muendlich ?? '';
+    let wertung = '–';
+    if (s !== '') {
+      if (b.hasMuendlich && m !== '') {
+        const pf = Math.round((2 * parseInt(s) + parseInt(m)) / 3 * 4);
+        wertung = `${pf} P`;
+      } else {
+        wertung = `${parseInt(s) * 4} P`;
+      }
+    }
+    return `<div class="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 grid gap-2 items-center"
+                 style="grid-template-columns:1fr 5rem 5rem 1fr 4rem">
+      <span class="text-sm font-semibold text-blue-800 flex items-center gap-1">
+        <span class="text-xs bg-blue-200 text-blue-800 px-1 rounded font-bold">LF${i+1}</span>
+        ${subjectName(id) || '–'}
+      </span>
+      <div class="flex flex-col items-center gap-0.5">
+        <span class="text-xs text-gray-400">Schriftl.</span>
+        <input type="number" min="0" max="15" value="${s}" placeholder="–"
+               class="pts-input border-blue-200"
+               onchange="state.b2[${i}].schriftlich=this.value;renderAll()">
+        <span class="text-xs">${gradeBadgeHtml(s)}</span>
+      </div>
+      <div class="flex flex-col items-center gap-0.5">
+        <label class="text-xs text-gray-400 flex items-center gap-1">
+          <input type="checkbox" ${b.hasMuendlich ? 'checked' : ''} class="w-3 h-3"
+                 onchange="state.b2[${i}].hasMuendlich=this.checked;renderAll()">
+          Mündl.
+        </label>
+        ${b.hasMuendlich ? `<input type="number" min="0" max="15" value="${m}" placeholder="–"
+               class="pts-input border-blue-200"
+               onchange="state.b2[${i}].muendlich=this.value;renderAll()">
+        <span class="text-xs">${gradeBadgeHtml(m)}</span>` : '<span class="text-xs text-gray-300">–</span>'}
+      </div>
+      <span class="text-xs text-gray-400">${b.hasMuendlich && s !== '' && m !== '' ? 'Formel: (2×s + m) / 3 × 4' : 'Formel: s × 4'}</span>
+      <span class="text-sm font-bold text-blue-700 text-center">${wertung}</span>
+    </div>`;
+  });
+
+  const mpfRows = [0, 1].map(i => {
+    const id = state.mpf[i] || '';
+    const v = state.b2mpf[i] ?? '';
+    const pts4 = v !== '' ? parseInt(v) * 4 : '–';
+    return `<div class="bg-gray-50 rounded-lg px-3 py-2 grid gap-2 items-center"
+                 style="grid-template-columns:1fr 5rem 5rem 1fr 4rem">
+      <span class="text-sm font-medium">${subjectName(id) || `mPF ${i+1}`}</span>
+      <div></div>
+      <div class="flex flex-col items-center gap-0.5">
+        <span class="text-xs text-gray-400">Mündl.</span>
+        <input type="number" min="0" max="15" value="${v}" placeholder="–"
+               class="pts-input"
+               onchange="state.b2mpf[${i}]=this.value;renderAll()">
+        <span class="text-xs">${gradeBadgeHtml(v)}</span>
+      </div>
+      <span class="text-xs text-gray-400">Formel: m × 4</span>
+      <span class="text-sm font-bold text-gray-700 text-center">${pts4 !== '–' ? pts4 + ' P' : '–'}</span>
+    </div>`;
+  });
+
+  el.innerHTML = [...lfRows, ...mpfRows].join('');
+}
+
+function renderResult() {
+  const { block1, totalCourses, issues: b1issues } = calcBlockI();
+  const { block2, detail, issues: b2issues } = calcBlockII();
+  const total = block1 + block2;
+  const grade = total >= 300 ? getGrade(total) : null;
+
+  document.getElementById('r-b1').textContent = `${block1} / 600`;
+  document.getElementById('r-b2').textContent = `${block2} / 300`;
+  document.getElementById('r-total').textContent = `${total} / 900`;
+  document.getElementById('r-note').textContent = grade || '–';
+
+  const configErrors = validateConfig();
+  const allIssues = [...configErrors.map(e => e.msg), ...b1issues, ...b2issues];
+
+  const passed = total >= 300 && block1 >= 200 && block2 >= 100 && allIssues.length === 0;
+  const statusEl = document.getElementById('r-status');
+  if (allIssues.length === 0 && total >= 300) {
+    statusEl.innerHTML = '<span class="text-green-700 bg-green-50 px-2 py-1 rounded">✓ Bestanden</span>';
+  } else if (total > 0) {
+    statusEl.innerHTML = '<span class="text-red-700 bg-red-50 px-2 py-1 rounded">✗ Nicht bestanden</span>';
+  } else {
+    statusEl.innerHTML = '';
+  }
+
+  // B2 detail
+  const detailEl = document.getElementById('r-b2-detail');
+  detailEl.innerHTML = detail.map(d =>
+    `<div class="flex justify-between ${d.ok ? '' : 'text-red-600'}">
+      <span>${d.name}</span>
+      <span class="font-semibold">${d.pts} P</span>
+    </div>`
+  ).join('');
+
+  // Warnings
+  const wEl = document.getElementById('r-warnings');
+  const wListEl = document.getElementById('r-warnings-list');
+  if (allIssues.length > 0) {
+    wEl.classList.remove('hidden');
+    wListEl.innerHTML = allIssues.map(m => `<div class="text-orange-700">• ${m}</div>`).join('');
+  } else {
+    wEl.classList.add('hidden');
+  }
+
+  // LF errors
+  const lfErr = configErrors.filter(e => e.el === 'lf');
+  document.getElementById('lf-errors').innerHTML = lfErr.map(e => errorEl(e.msg, 'warn')).join('');
+  const mpfErr = configErrors.filter(e => e.el === 'mpf');
+  document.getElementById('mpf-errors').innerHTML = mpfErr.map(e => errorEl(e.msg, 'warn')).join('');
+}
+
+function renderAll() {
+  renderLFSelects();
+  renderMPFSelects();
+  renderDoubleSelects();
+  renderBasisConfig();
+  renderBlock1();
+  renderBlock2();
+  renderResult();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  EVENT HANDLERS
+// ══════════════════════════════════════════════════════════════
+
+function setLF(i, val) {
+  state.lf[i] = val;
+  // remove from doubled if no longer LF
+  state.doubled = state.doubled.filter(id => state.lf.filter(Boolean).includes(id));
+  // auto-set doubled if not set yet
+  if (state.doubled.length < 2) {
+    for (const id of state.lf.filter(Boolean)) {
+      if (!state.doubled.includes(id) && state.doubled.length < 2) {
+        state.doubled.push(id);
+      }
+    }
+  }
+  renderAll();
+}
+
+function setMPF(i, val) {
+  state.mpf[i] = val;
+  renderAll();
+}
+
+function toggleDoubled(id, checked) {
+  if (checked) {
+    if (state.doubled.length < 2) state.doubled.push(id);
+  } else {
+    state.doubled = state.doubled.filter(d => d !== id);
+  }
+  renderAll();
+}
+
+function setGrade(key, val) {
+  if (val === '' || val === null) {
+    delete state.grades[key];
+  } else {
+    state.grades[key] = Math.max(0, Math.min(15, parseInt(val)));
+  }
+  renderResult();
+  // Re-render block1 errors only (avoid full re-render)
+  const { issues } = calcBlockI();
+  document.getElementById('block1-errors').innerHTML = issues.map(m => errorEl(m)).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+
+renderAll();
+</script>
+</body>
+</html>
