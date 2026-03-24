@@ -188,7 +188,7 @@
 
 const AF = { I: 1, II: 2, III: 3, NONE: 0 };
 
-const SUBJECTS = [
+const SUBJECTS_RAW = [
   // AF I
   { id: 'deutsch',          name: 'Deutsch',           af: AF.I,   lfOk: true,  isFS: false, isNW: false },
   { id: 'englisch',         name: 'Englisch',           af: AF.I,   lfOk: true,  isFS: true,  isNW: false },
@@ -218,6 +218,7 @@ const SUBJECTS = [
   { id: 'sport',            name: 'Sport',              af: AF.NONE, lfOk: true, isFS: false, isNW: false },
 ];
 
+const SUBJECTS = [...SUBJECTS_RAW].sort((a, b) => a.name.localeCompare(b.name, 'de'));
 const subjectMap = Object.fromEntries(SUBJECTS.map(s => [s.id, s]));
 
 const GRADE_TABLE = [
