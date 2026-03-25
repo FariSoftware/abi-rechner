@@ -1270,9 +1270,7 @@ function setGrade(key, val) {
     state.grades[key] = Math.max(0, Math.min(15, parseInt(val)));
   }
   renderResult();
-  // Re-render block1 errors only (avoid full re-render)
-  const { issues } = calcBlockI();
-  document.getElementById('block1-errors').innerHTML = issues.map(m => errorEl(m)).join('');
+  renderBlock1();
 }
 
 // ══════════════════════════════════════════════════════════════
