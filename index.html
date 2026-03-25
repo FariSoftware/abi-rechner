@@ -646,7 +646,7 @@ function renderCourseOverview() {
     ).join(' ');
     return `<div class="flex items-center gap-2 py-1 px-2 rounded-lg hover:bg-gray-50">
       ${tag}
-      <span class="text-sm font-medium flex-1">${sub.name}</span>
+      <span class="text-sm font-medium flex-1">${subjectName(sub.id)}</span>
       <span class="text-xs text-gray-400 flex gap-1">${hjBadges}</span>
       <span class="text-xs font-bold text-gray-600 ml-2 w-10 text-right">${sub.hj} Kurs${sub.hj !== 1 ? 'e' : ''}</span>
     </div>`;
@@ -690,7 +690,7 @@ function renderBlock1() {
 
     return `<div class="${rowBg} rounded-lg px-3 py-2 grid gap-2 items-center"
                  style="grid-template-columns: 1fr repeat(${sub.hj}, 3.5rem) 2rem 3.5rem">
-      <span class="text-sm font-medium flex items-center gap-1">${sub.name} ${lfBadge}</span>
+      <span class="text-sm font-medium flex items-center gap-1">${subjectName(sub.id)} ${lfBadge}</span>
       ${inputs}
       <span class="text-xs text-gray-500 text-center font-semibold">${sum}</span>
       <span class="text-xs text-center font-semibold text-gray-600">${avgNote}</span>
