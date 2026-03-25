@@ -98,6 +98,7 @@
         <span id="course-counter" class="ml-auto text-xs font-normal"></span>
       </h2>
       <p class="text-xs text-gray-500 mb-4 ml-8">Überblick über die geplanten Block-I-Kurse. Genau 40 Kurse müssen eingebracht werden.</p>
+      <div id="overview-config" class="mb-3"></div>
       <div id="course-overview" class="space-y-1"></div>
       <div id="overview-errors" class="mt-2 space-y-1"></div>
     </div>
@@ -664,22 +665,28 @@ function renderBasisConfig() {
     </div>`);
   }
 
-  // Kunst oder Musik
-  const kmOpts = ['kunst','musik'].filter(id => !lfs.includes(id))
-    .map(id => `<option value="${id}" ${id === state.kunstMusik ? 'selected' : ''}>${subjectName(id)}</option>`).join('');
-  if (kmOpts) {
-    fields.push(`<div>
-      <label class="text-xs font-semibold text-gray-600 mb-1 block">Kunst oder Musik</label>
-      <select class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm" onchange="state.kunstMusik=this.value;renderAll()">
-        ${kmOpts}
-      </select>
-    </div>`);
-  }
+  // Kunst oder Musik — moved to Step 3
 
   el.innerHTML = fields.length ? fields.join('') : '<p class="text-xs text-gray-400">Pflichtfächer durch LF-Wahl abgedeckt.</p>';
 }
 
 function renderCourseOverview() {
+  // Kunst/Musik picker
+  const lfs = state.lf.filter(Boolean);
+  const configEl = document.getElementById('overview-config');
+  const kmOpts = ['kunst','musik'].filter(id => !lfs.includes(id))
+    .map(id => `<option value="${id}" ${id === state.kunstMusik ? 'selected' : ''}>${subjectName(id)}</option>`).join('');
+  if (kmOpts && !['kunst','musik'].every(id => lfs.includes(id))) {
+    configEl.innerHTML = `<div class="flex items-center gap-3 text-sm">
+      <label class="font-semibold text-gray-600 whitespace-nowrap">Kunst oder Musik:</label>
+      <select class="border border-gray-200 rounded-lg px-2 py-1.5 text-sm" onchange="state.kunstMusik=this.value;renderAll()">
+        ${kmOpts}
+      </select>
+    </div>`;
+  } else {
+    configEl.innerHTML = '';
+  }
+
   const subs = getBlock1Subjects();
   const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
   const MIN_COURSES = 42;
