@@ -693,8 +693,10 @@ function renderCourseOverview() {
 
   // Group by type: LF / Pflicht-Basisfach
   const { inBlock1 } = calcBlockI();
+  const extraIds = state.extraCourses.map(e => e.id).filter(Boolean);
 
-  const rows = subs.map(sub => {
+  // Only show auto-required subjects in the main list (extras shown separately below)
+  const rows = subs.filter(sub => !extraIds.includes(sub.id)).map(sub => {
     const b1 = inBlock1.has(sub.id);
     const tag = sub.isLF
       ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF${sub.doubled ? ' ×2' : ''}</span>`
