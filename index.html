@@ -9,21 +9,56 @@
     input[type=number]::-webkit-inner-spin-button,
     input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
     input[type=number] { -moz-appearance: textfield; }
+
     .pts-input {
       width: 3rem; text-align: center; border: 1px solid #d1d5db;
       border-radius: 0.375rem; padding: 0.25rem 0;
       font-size: 0.9rem; font-weight: 600;
     }
+    /* Bigger touch targets on mobile */
+    @media (max-width: 640px) {
+      .pts-input { width: 3.2rem; padding: 0.4rem 0; font-size: 1rem; }
+      select { font-size: 1rem; }
+    }
     .pts-input:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+
     .badge {
       display: inline-flex; align-items: center; justify-content: center;
       min-width: 2.2rem; height: 1.4rem; border-radius: 9999px;
       font-size: 0.65rem; font-weight: 700; padding: 0 0.35rem;
     }
-    .subject-row { display: grid; grid-template-columns: 1fr repeat(4, auto) auto auto; gap: 0.5rem; align-items: center; }
-    .subject-row-2hj { display: grid; grid-template-columns: 1fr repeat(2, auto) auto auto; gap: 0.5rem; align-items: center; }
+
+    /* Grade row: desktop inline, mobile stacked */
+    .grade-row {
+      display: grid;
+      grid-template-columns: 1fr repeat(4, 3.5rem) 2rem 3.5rem;
+      gap: 0.4rem;
+      align-items: center;
+    }
+    .grade-row-2 {
+      display: grid;
+      grid-template-columns: 1fr repeat(2, 3.5rem) 2rem 3.5rem;
+      gap: 0.4rem;
+      align-items: center;
+    }
     @media (max-width: 640px) {
-      .subject-row, .subject-row-2hj { grid-template-columns: 1fr; }
+      .grade-row, .grade-row-2 {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+      .grade-row-hjs, .grade-row-2-hjs {
+        display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      }
+    }
+
+    /* Sticky mobile bottom bar */
+    #mobile-result-bar {
+      display: none;
+    }
+    @media (max-width: 1024px) {
+      #mobile-result-bar { display: flex; }
+      /* Add padding so content isn't hidden behind bar */
+      body { padding-bottom: 5rem; }
     }
   </style>
 </head>
@@ -150,7 +185,8 @@
   </div><!-- /main -->
 
   <!-- ══════════════════════════════════════════════════ SIDEBAR ══ -->
-  <div class="w-full lg:w-64 flex-shrink-0 mt-4 lg:mt-0">
+  <!-- Hidden on mobile — result shown in sticky bottom bar instead -->
+  <div class="hidden lg:block w-64 flex-shrink-0">
     <div class="lg:sticky lg:top-4 space-y-3">
 
       <!-- Result card -->
@@ -194,6 +230,29 @@
   </div>
 
 </div><!-- /grid -->
+
+<!-- ══ MOBILE STICKY RESULT BAR ══ -->
+<div id="mobile-result-bar"
+     class="fixed bottom-0 left-0 right-0 z-40 bg-blue-800 text-white shadow-2xl
+            items-center justify-between px-4 py-2 gap-3">
+  <div class="flex items-center gap-3 flex-1">
+    <div class="text-xs text-blue-200">Block I</div>
+    <div id="mb-b1" class="font-bold text-sm">–</div>
+    <div class="text-xs text-blue-200 ml-2">Block II</div>
+    <div id="mb-b2" class="font-bold text-sm">–</div>
+  </div>
+  <div class="flex items-center gap-3">
+    <div>
+      <div class="text-xs text-blue-200">Gesamt</div>
+      <div id="mb-total" class="font-bold text-sm">–</div>
+    </div>
+    <div class="bg-white rounded-lg px-3 py-1 text-center min-w-[3.5rem]">
+      <div class="text-xs text-gray-400">Note</div>
+      <div id="mb-note" class="text-xl font-black text-blue-800">–</div>
+    </div>
+    <div id="mb-status" class="text-xs font-bold"></div>
+  </div>
+</div>
 
 <script>
 // ══════════════════════════════════════════════════════════════
@@ -841,12 +900,35 @@ function renderBlock1() {
       </div>`;
     }).join('');
 
-    return `<div class="${rowBg} rounded-lg px-3 py-2 grid gap-2 items-center"
-                 style="grid-template-columns: 1fr repeat(${sub.hj}, 3.5rem) 2rem 3.5rem">
-      <span class="text-sm font-medium flex items-center gap-1">${subjectName(sub.id)} ${lfBadge}</span>
-      ${inputs}
-      <span class="text-xs text-gray-500 text-center font-semibold">${sum}</span>
-      <span class="text-xs text-center font-semibold text-gray-600">${avgNote}</span>
+    return `<div class="${rowBg} rounded-lg px-3 py-2">
+      <!-- Desktop: single row -->
+      <div class="hidden sm:grid gap-2 items-center"
+           style="grid-template-columns: 1fr repeat(${sub.hj}, 3.5rem) 2rem 3.5rem">
+        <span class="text-sm font-medium flex items-center gap-1">${subjectName(sub.id)} ${lfBadge}</span>
+        ${inputs}
+        <span class="text-xs text-gray-500 text-center font-semibold">${sum}</span>
+        <span class="text-xs text-center font-semibold text-gray-600">${avgNote}</span>
+      </div>
+      <!-- Mobile: stacked -->
+      <div class="sm:hidden">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium flex items-center gap-1">${subjectName(sub.id)} ${lfBadge}</span>
+          <span class="text-xs font-semibold text-gray-600">${avgNote} · Σ ${sum}</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          ${Array.from({length: sub.hj}, (_, j) => {
+            const key = `${sub.id}_${j+1}`;
+            const v = state.grades[key] ?? '';
+            return `<div class="flex items-center gap-1">
+              <span class="text-xs text-gray-400 w-8">HJ${j+1}</span>
+              <input type="number" min="0" max="15" value="${v}" placeholder="–"
+                     class="pts-input ${sub.isLF ? 'border-blue-200' : ''}"
+                     onchange="setGrade('${key}', this.value); this.nextElementSibling.innerHTML = gradeBadgeHtml(this.value)">
+              <span class="text-xs">${gradeBadgeHtml(v)}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
     </div>`;
   }).join('');
 
@@ -860,6 +942,44 @@ function renderBlock2() {
   const lfs = state.lf.filter(Boolean);
   const el = document.getElementById('block2-rows');
 
+  const b2Row = (bgCls, labelHtml, s, m, hasMuendlich, wertung, formula, onChangeS, onChangeM, onChangeCheck) =>
+    `<div class="${bgCls} rounded-lg px-3 py-2">
+      <!-- Desktop -->
+      <div class="hidden sm:grid gap-2 items-center" style="grid-template-columns:1fr 5rem 5rem 1fr 4rem">
+        <span class="text-sm font-semibold">${labelHtml}</span>
+        <div class="flex flex-col items-center gap-0.5">
+          <span class="text-xs text-gray-400">${s !== undefined ? 'Schriftl.' : ''}</span>
+          ${s !== undefined ? `<input type="number" min="0" max="15" value="${s}" placeholder="–" class="pts-input border-blue-200" onchange="${onChangeS}">
+          <span class="text-xs">${gradeBadgeHtml(s)}</span>` : '<div></div>'}
+        </div>
+        <div class="flex flex-col items-center gap-0.5">
+          ${onChangeCheck ? `<label class="text-xs text-gray-400 flex items-center gap-1">
+            <input type="checkbox" ${hasMuendlich ? 'checked' : ''} class="w-3 h-3" onchange="${onChangeCheck}"> Mündl.
+          </label>` : '<span class="text-xs text-gray-400">Mündl.</span>'}
+          ${(hasMuendlich !== false) && m !== undefined ? `<input type="number" min="0" max="15" value="${m}" placeholder="–" class="pts-input border-blue-200" onchange="${onChangeM}">
+          <span class="text-xs">${gradeBadgeHtml(m)}</span>` : (onChangeCheck && !hasMuendlich ? '<span class="text-xs text-gray-300">–</span>' : '')}
+        </div>
+        <span class="text-xs text-gray-400">${formula}</span>
+        <span class="text-sm font-bold text-blue-700 text-center">${wertung}</span>
+      </div>
+      <!-- Mobile -->
+      <div class="sm:hidden flex items-center justify-between gap-2">
+        <span class="text-sm font-semibold flex-1">${labelHtml}</span>
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+          ${s !== undefined ? `<div class="flex flex-col items-center"><span class="text-xs text-gray-400">Schriftl.</span>
+            <input type="number" min="0" max="15" value="${s}" placeholder="–" class="pts-input border-blue-200" onchange="${onChangeS}">
+            <span class="text-xs">${gradeBadgeHtml(s)}</span></div>` : ''}
+          ${onChangeCheck ? `<label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+            <input type="checkbox" ${hasMuendlich ? 'checked' : ''} class="w-4 h-4" onchange="${onChangeCheck}"> +Mündl.
+          </label>` : ''}
+          ${(hasMuendlich !== false) && m !== undefined ? `<div class="flex flex-col items-center"><span class="text-xs text-gray-400">Mündl.</span>
+            <input type="number" min="0" max="15" value="${m}" placeholder="–" class="pts-input border-blue-200" onchange="${onChangeM}">
+            <span class="text-xs">${gradeBadgeHtml(m)}</span></div>` : ''}
+          <span class="text-sm font-bold text-blue-700 ml-1">${wertung}</span>
+        </div>
+      </div>
+    </div>`;
+
   const lfRows = [0, 1, 2].map(i => {
     const id = lfs[i] || '';
     const b = state.b2[i];
@@ -870,57 +990,27 @@ function renderBlock2() {
       if (b.hasMuendlich && m !== '') {
         const pf = Math.round((2 * parseInt(s) + parseInt(m)) / 3 * 4);
         wertung = `${pf} P`;
-      } else {
-        wertung = `${parseInt(s) * 4} P`;
-      }
+      } else { wertung = `${parseInt(s) * 4} P`; }
     }
-    return `<div class="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 grid gap-2 items-center"
-                 style="grid-template-columns:1fr 5rem 5rem 1fr 4rem">
-      <span class="text-sm font-semibold text-blue-800 flex items-center gap-1">
-        <span class="text-xs bg-blue-200 text-blue-800 px-1 rounded font-bold">LF${i+1}</span>
-        ${subjectName(id) || '–'}
-      </span>
-      <div class="flex flex-col items-center gap-0.5">
-        <span class="text-xs text-gray-400">Schriftl.</span>
-        <input type="number" min="0" max="15" value="${s}" placeholder="–"
-               class="pts-input border-blue-200"
-               onchange="state.b2[${i}].schriftlich=this.value;renderAll()">
-        <span class="text-xs">${gradeBadgeHtml(s)}</span>
-      </div>
-      <div class="flex flex-col items-center gap-0.5">
-        <label class="text-xs text-gray-400 flex items-center gap-1">
-          <input type="checkbox" ${b.hasMuendlich ? 'checked' : ''} class="w-3 h-3"
-                 onchange="state.b2[${i}].hasMuendlich=this.checked;renderAll()">
-          Mündl.
-        </label>
-        ${b.hasMuendlich ? `<input type="number" min="0" max="15" value="${m}" placeholder="–"
-               class="pts-input border-blue-200"
-               onchange="state.b2[${i}].muendlich=this.value;renderAll()">
-        <span class="text-xs">${gradeBadgeHtml(m)}</span>` : '<span class="text-xs text-gray-300">–</span>'}
-      </div>
-      <span class="text-xs text-gray-400">${b.hasMuendlich && s !== '' && m !== '' ? 'Formel: (2×s + m) / 3 × 4' : 'Formel: s × 4'}</span>
-      <span class="text-sm font-bold text-blue-700 text-center">${wertung}</span>
-    </div>`;
+    const label = `<span class="flex items-center gap-1 text-blue-800">
+      <span class="text-xs bg-blue-200 text-blue-800 px-1 rounded font-bold">LF${i+1}</span>
+      ${subjectName(id) || '–'}</span>`;
+    return b2Row('bg-blue-50 border border-blue-100', label, s, b.hasMuendlich ? m : '', b.hasMuendlich,
+      wertung,
+      b.hasMuendlich && s !== '' && m !== '' ? 'Formel: (2×s + m) / 3 × 4' : 'Formel: s × 4',
+      `state.b2[${i}].schriftlich=this.value;renderAll()`,
+      `state.b2[${i}].muendlich=this.value;renderAll()`,
+      `state.b2[${i}].hasMuendlich=this.checked;renderAll()`);
   });
 
   const mpfRows = [0, 1].map(i => {
     const id = state.mpf[i] || '';
     const v = state.b2mpf[i] ?? '';
     const pts4 = v !== '' ? parseInt(v) * 4 : '–';
-    return `<div class="bg-gray-50 rounded-lg px-3 py-2 grid gap-2 items-center"
-                 style="grid-template-columns:1fr 5rem 5rem 1fr 4rem">
-      <span class="text-sm font-medium">${subjectName(id) || `mPF ${i+1}`}</span>
-      <div></div>
-      <div class="flex flex-col items-center gap-0.5">
-        <span class="text-xs text-gray-400">Mündl.</span>
-        <input type="number" min="0" max="15" value="${v}" placeholder="–"
-               class="pts-input"
-               onchange="state.b2mpf[${i}]=this.value;renderAll()">
-        <span class="text-xs">${gradeBadgeHtml(v)}</span>
-      </div>
-      <span class="text-xs text-gray-400">Formel: m × 4</span>
-      <span class="text-sm font-bold text-gray-700 text-center">${pts4 !== '–' ? pts4 + ' P' : '–'}</span>
-    </div>`;
+    const label = `<span class="text-gray-800">${subjectName(id) || `mPF ${i+1}`}</span>`;
+    return b2Row('bg-gray-50', label, undefined, v, false,
+      pts4 !== '–' ? pts4 + ' P' : '–', 'Formel: m × 4',
+      '', `state.b2mpf[${i}]=this.value;renderAll()`, null);
   });
 
   el.innerHTML = [...lfRows, ...mpfRows].join('');
@@ -936,6 +1026,11 @@ function renderResult() {
   document.getElementById('r-b2').textContent = `${block2} / 300`;
   document.getElementById('r-total').textContent = `${total} / 900`;
   document.getElementById('r-note').textContent = grade || '–';
+  // Mobile bar
+  document.getElementById('mb-b1').textContent = block1;
+  document.getElementById('mb-b2').textContent = block2;
+  document.getElementById('mb-total').textContent = `${total} / 900`;
+  document.getElementById('mb-note').textContent = grade || '–';
 
   const configErrors = validateConfig();
   const allIssues = [...configErrors.map(e => e.msg), ...b1issues, ...b2issues];
