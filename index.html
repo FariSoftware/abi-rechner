@@ -259,6 +259,8 @@ const state = {
   fs1: 'englisch',       // 1. Fremdsprache (if not LF)
   nw1: 'biologie',       // Naturwissenschaft (if not LF)
   kunstMusik: 'kunst',   // Kunst oder Musik
+  geoHj: 2,             // Geographie: 2 or 4
+  gkHj: 2,              // Gemeinschaftskunde: 2 or 4
   // Extra courses added manually in Step 3 to reach 40
   extraCourses: [],      // [{ id: string, hj: number }]
   // Grades: { key: number } where key = subjectId_hj (1–4)
@@ -354,9 +356,9 @@ function getBlock1Subjects() {
 
   addRequired('geschichte', 4);
 
-  // Geographie & Gemeinschaftskunde
-  const geo_hj = state.mpf.includes('geographie') ? 4 : 2;
-  const gk_hj  = state.mpf.includes('gemeinschaftskunde') ? 4 : 2;
+  // Geographie & Gemeinschaftskunde — min 2, up to 4; forced 4 if mündl. PF
+  const geo_hj = state.mpf.includes('geographie') ? 4 : state.geoHj;
+  const gk_hj  = state.mpf.includes('gemeinschaftskunde') ? 4 : state.gkHj;
   addRequired('geographie', geo_hj);
   addRequired('gemeinschaftskunde', gk_hj);
 
@@ -676,16 +678,48 @@ function renderCourseOverview() {
   const configEl = document.getElementById('overview-config');
   const kmOpts = ['kunst','musik'].filter(id => !lfs.includes(id))
     .map(id => `<option value="${id}" ${id === state.kunstMusik ? 'selected' : ''}>${subjectName(id)}</option>`).join('');
+  const configFields = [];
+
   if (kmOpts && !['kunst','musik'].every(id => lfs.includes(id))) {
-    configEl.innerHTML = `<div class="flex items-center gap-3 text-sm">
-      <label class="font-semibold text-gray-600 whitespace-nowrap">Kunst oder Musik:</label>
-      <select class="border border-gray-200 rounded-lg px-2 py-1.5 text-sm" onchange="state.kunstMusik=this.value;renderAll()">
+    configFields.push(`<div class="flex items-center gap-2">
+      <label class="text-xs font-semibold text-gray-600 whitespace-nowrap">Kunst/Musik:</label>
+      <select class="border border-gray-200 rounded-lg px-2 py-1 text-sm" onchange="state.kunstMusik=this.value;renderAll()">
         ${kmOpts}
       </select>
-    </div>`;
-  } else {
-    configEl.innerHTML = '';
+    </div>`);
   }
+
+  // Geographie: 2 or 4 (locked to 4 if mündl. PF)
+  if (!lfs.includes('geographie')) {
+    const geoLocked = state.mpf.includes('geographie');
+    configFields.push(`<div class="flex items-center gap-2">
+      <label class="text-xs font-semibold text-gray-600 whitespace-nowrap">Geographie:</label>
+      ${geoLocked
+        ? `<span class="text-xs text-gray-400">4 Kurse (mündl. PF)</span>`
+        : `<select class="border border-gray-200 rounded-lg px-2 py-1 text-sm" onchange="state.geoHj=parseInt(this.value);renderAll()">
+            <option value="2" ${state.geoHj===2?'selected':''}>2 Kurse</option>
+            <option value="4" ${state.geoHj===4?'selected':''}>4 Kurse</option>
+           </select>`}
+    </div>`);
+  }
+
+  // Gemeinschaftskunde: 2 or 4 (locked to 4 if mündl. PF)
+  if (!lfs.includes('gemeinschaftskunde')) {
+    const gkLocked = state.mpf.includes('gemeinschaftskunde');
+    configFields.push(`<div class="flex items-center gap-2">
+      <label class="text-xs font-semibold text-gray-600 whitespace-nowrap">Gemeinschaftskunde:</label>
+      ${gkLocked
+        ? `<span class="text-xs text-gray-400">4 Kurse (mündl. PF)</span>`
+        : `<select class="border border-gray-200 rounded-lg px-2 py-1 text-sm" onchange="state.gkHj=parseInt(this.value);renderAll()">
+            <option value="2" ${state.gkHj===2?'selected':''}>2 Kurse</option>
+            <option value="4" ${state.gkHj===4?'selected':''}>4 Kurse</option>
+           </select>`}
+    </div>`);
+  }
+
+  configEl.innerHTML = configFields.length
+    ? `<div class="flex flex-wrap gap-3 items-center">${configFields.join('')}</div>`
+    : '';
 
   const subs = getBlock1Subjects();
   const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
