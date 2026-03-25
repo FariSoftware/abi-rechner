@@ -889,6 +889,7 @@ function renderAll() {
   renderBlock1();
   renderBlock2();
   renderResult();
+  persistState();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -998,9 +999,27 @@ function showToast(msg, isError = false) {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  LOCALSTORAGE PERSISTENCE
+// ══════════════════════════════════════════════════════════════
+
+const STORAGE_KEY = 'abi-rechner-state-v1';
+
+function persistState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+function restoreState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) Object.assign(state, JSON.parse(raw));
+  } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════════════
 
+restoreState();
 renderAll();
 </script>
 </body>
