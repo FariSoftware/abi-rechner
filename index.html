@@ -555,6 +555,18 @@ function validateConfig() {
     errors.push({ el: 'double', msg: 'Bitte genau 2 Leistungsfächer für Doppelgewichtung wählen.' });
   }
 
+  // Block I: entweder 2 FS mit je 4 Kursen ODER 2 NW (inkl. Informatik/NwT) mit je 4 Kursen
+  if (lfs.length === 3) {
+    const subs = getBlock1Subjects();
+    const subIds = subs.filter(s => s.hj >= 4).map(s => s.id);
+    const fsCount = subIds.filter(id => subjectMap[id]?.isFS).length;
+    const nwIds = ['biologie','chemie','physik','informatik','nwt'];
+    const nwCount = subIds.filter(id => nwIds.includes(id)).length;
+    if (fsCount < 2 && nwCount < 2) {
+      errors.push({ el: 'lf', msg: 'Block I muss entweder mind. 2 Fremdsprachen oder mind. 2 Naturwissenschaften (je 4 Kurse) enthalten.' });
+    }
+  }
+
   return errors;
 }
 
