@@ -140,58 +140,41 @@
   <!-- ══════════════════════════════════════════════════ MAIN ══ -->
   <div class="flex-1 min-w-0 space-y-4">
 
-    <!-- ── SCHRITT 1: LEISTUNGSFÄCHER ── -->
+    <!-- ── SCHRITT 1: PRÜFUNGSFÄCHER ── -->
     <div class="bg-white rounded-xl shadow">
       <div class="p-5 pb-3">
         <button class="step-toggle-btn w-full text-left flex items-center gap-2 group" onclick="toggleStep('step1-body', this)" aria-expanded="true">
           <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
-          <h2 class="font-bold text-blue-800 text-base flex-1">Leistungsfächer wählen</h2>
+          <h2 class="font-bold text-blue-800 text-base flex-1">Prüfungsfächer wählen</h2>
           <span class="step-chevron text-blue-400 text-sm transition-transform duration-300 lg:hidden">▼</span>
         </button>
       </div>
       <div id="step1-body" class="step-body px-5 pb-5">
-        <p class="text-xs text-gray-500 mb-3">3 Leistungsfächer · 2 davon müssen aus Deutsch, Mathe, Fremdsprache oder Naturwissenschaft stammen</p>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="lf-selects"></div>
-        <div id="lf-errors" class="mt-2 space-y-1"></div>
-      </div>
-    </div>
-
-    <!-- ── SCHRITT 2: KONFIGURATION ── -->
-    <div class="bg-white rounded-xl shadow">
-      <div class="p-5 pb-3">
-        <button class="step-toggle-btn w-full text-left flex items-center gap-2 group" onclick="toggleStep('step2-body', this)" aria-expanded="true">
-          <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
-          <h2 class="font-bold text-blue-800 text-base flex-1">Prüfungskonfiguration</h2>
-          <span class="step-chevron text-blue-400 text-sm transition-transform duration-300 lg:hidden">▼</span>
-        </button>
-      </div>
-      <div id="step2-body" class="step-body px-5 pb-5">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <!-- mündliche PFs -->
+        <!-- Leistungsfächer -->
+        <div class="mb-5">
+          <p class="text-xs font-semibold text-gray-700 mb-1">Leistungsfächer <span class="text-gray-400 font-normal">(3 wählen · mind. 2 aus Deutsch, Mathe, Fremdsprache oder Naturwissenschaft)</span></p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="lf-selects"></div>
+          <div id="lf-errors" class="mt-2 space-y-1"></div>
+        </div>
+        <!-- Mündliche Prüfungsfächer -->
         <div>
           <p class="text-sm font-semibold text-gray-700 mb-2">Mündliche Prüfungsfächer <span class="text-gray-400 font-normal">(2 aus Basisfächern)</span></p>
           <div class="space-y-2" id="mpf-selects"></div>
           <div id="mpf-errors" class="mt-1 space-y-1"></div>
         </div>
-        <!-- Doppelgewichtung -->
-        <div>
-          <p class="text-sm font-semibold text-gray-700 mb-2">Doppelt gewichtete LFs in Block I <span class="text-gray-400 font-normal">(2 von 3 wählen)</span></p>
-          <div class="space-y-1" id="double-selects"></div>
+        <!-- Basisfach-Konfiguration -->
+        <div class="mt-4 pt-4 border-t border-gray-100">
+          <p class="text-sm font-semibold text-gray-700 mb-2">Pflicht-Basisfächer <span class="text-gray-400 font-normal">(für Block I)</span></p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="basis-config"></div>
         </div>
       </div>
-      <!-- Basisfach-Konfiguration -->
-      <div class="mt-4 pt-4 border-t border-gray-100">
-        <p class="text-sm font-semibold text-gray-700 mb-2">Pflicht-Basisfächer <span class="text-gray-400 font-normal">(für Block I)</span></p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="basis-config"></div>
-      </div>
-      </div><!-- /step2-body -->
     </div>
 
     <!-- ── KURSÜBERSICHT (Planung, ohne Noten) ── -->
     <div class="bg-white rounded-xl shadow">
       <div class="p-5 pb-3">
         <button class="step-toggle-btn w-full text-left flex items-center gap-2 group" onclick="toggleStep('step3-body', this)" aria-expanded="true">
-          <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+          <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
           <h2 class="font-bold text-blue-800 text-base flex-1">Kursübersicht – Block I</h2>
           <span id="course-counter" class="text-xs font-normal mr-1"></span>
           <span class="step-chevron text-blue-400 text-sm transition-transform duration-300 lg:hidden">▼</span>
@@ -215,7 +198,7 @@
     <!-- ── SCHRITT 4: BLOCK I NOTEN ── -->
     <div class="bg-white rounded-xl shadow p-5">
       <h2 class="font-bold text-blue-800 text-base mb-1 flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
         Block I – Kursnoten
       </h2>
       <p class="text-xs text-gray-500 mb-4 ml-8">Punkte 0–15 eingeben. Genau 40 Kurse fließen in die Berechnung ein.</p>
@@ -238,7 +221,7 @@
     <!-- ── SCHRITT 5: BLOCK II ABITURPRÜFUNG ── -->
     <div class="bg-white rounded-xl shadow p-5">
       <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">5</span>
+        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
         Block II – Abiturprüfung
       </h2>
 
@@ -427,7 +410,6 @@ const POINTS_TO_NOTE = ['6','5−','5','5+','4−','4','4+','3−','3','3+','2�
 const state = {
   lf: ['deutsch', 'mathematik', 'englisch'],
   mpf: ['geschichte', 'biologie'],
-  doubled: ['deutsch', 'mathematik'],
   // Basisfach choices
   fs1: 'englisch',       // 1. Fremdsprache (if not LF)
   nw1: 'biologie',       // Naturwissenschaft (if not LF)
@@ -513,7 +495,7 @@ function getBlock1Subjects() {
 
   // 3 LFs — always required in Block I
   for (const id of lfIds) {
-    if (id) subjects.push({ id, hj: 4, isLF: true, doubled: state.doubled.includes(id), requiredBlock1: true });
+    if (id) subjects.push({ id, hj: 4, isLF: true, requiredBlock1: true });
   }
 
   addRequired('deutsch', 4);
@@ -587,6 +569,40 @@ function selectBlock1Courses(allSubjects) {
   return included; // Set of subject IDs in Block I
 }
 
+// Auto-compute which 2 of 3 LFs yield the highest Block I score.
+// Called inside calcBlockI(); allSubs and inBlock1 are pre-computed to avoid circularity.
+function computeBestDoubled(allSubs, inBlock1) {
+  const lfs = state.lf.filter(Boolean);
+  if (lfs.length < 2) return lfs.slice(0, 2);
+
+  const combos = [];
+  for (let i = 0; i < lfs.length - 1; i++)
+    for (let j = i + 1; j < lfs.length; j++)
+      combos.push([lfs[i], lfs[j]]);
+
+  let bestCombo = combos[0];
+  let bestScore = -Infinity;
+
+  for (const combo of combos) {
+    let sumAll = 0, sumDoubled = 0, count = 0;
+    for (const sub of allSubs) {
+      if (!inBlock1.has(sub.id)) continue;
+      const isDoubled = combo.includes(sub.id);
+      for (let hj = 1; hj <= sub.hj; hj++) {
+        const pts = ptVal(`${sub.id}_${hj}`) ?? 0;
+        sumAll += pts;
+        count++;
+        if (isDoubled) sumDoubled += pts;
+      }
+    }
+    const denom = count + combo.length * 4;
+    const score = denom > 0 ? (sumAll + sumDoubled) / denom : 0;
+    if (score > bestScore) { bestScore = score; bestCombo = combo; }
+  }
+
+  return bestCombo; // array of 2 subject IDs
+}
+
 // ══════════════════════════════════════════════════════════════
 //  CALCULATION
 // ══════════════════════════════════════════════════════════════
@@ -596,24 +612,28 @@ function calcBlockI() {
   const totalPlanned = allSubs.reduce((sum, s) => sum + s.hj, 0);
   const inBlock1 = selectBlock1Courses(allSubs);
 
+  // Auto-select the 2 LFs that yield the best Block I score
+  const doubled = computeBestDoubled(allSubs, inBlock1);
+
   let sumAll = 0, sumDoubled = 0, coursesInBlock1 = 0;
   let unterpunktet = 0, unterpunktetLF = 0, hasZero = false;
   const issues = [];
 
   for (const sub of allSubs) {
     if (!inBlock1.has(sub.id)) continue;
+    const isDoubled = doubled.includes(sub.id);
     for (let hj = 1; hj <= sub.hj; hj++) {
       const v = ptVal(`${sub.id}_${hj}`);
       const pts = v === null ? 0 : v;
       sumAll += pts;
       coursesInBlock1++;
-      if (sub.doubled) sumDoubled += pts;
+      if (isDoubled) sumDoubled += pts;
       if (pts < 5) { unterpunktet++; if (sub.isLF) unterpunktetLF++; }
       if (pts === 0) hasZero = true;
     }
   }
 
-  const doubledCount = state.doubled.filter(Boolean).length * 4;
+  const doubledCount = doubled.length * 4;
   const denominator = coursesInBlock1 + doubledCount;
   const block1 = denominator > 0 ? Math.round((sumAll + sumDoubled) * 40 / denominator) : 0;
 
@@ -623,7 +643,7 @@ function calcBlockI() {
   if (hasZero) issues.push('Block I: Kein Kurs darf 0 Punkte haben');
   if (block1 < 200) issues.push(`Block I: Mindestens 200 Punkte nötig (aktuell ${block1})`);
 
-  return { block1, totalPlanned, coursesInBlock1, inBlock1, issues };
+  return { block1, totalPlanned, coursesInBlock1, inBlock1, doubled, issues };
 }
 
 function calcBlockII() {
@@ -726,12 +746,6 @@ function validateConfig() {
     errors.push({ el: 'mpf', msg: 'Mathematik muss Prüfungsfach sein (schriftlich als LF oder mündlich).' });
   }
 
-  // doubled: must pick exactly 2 of 3 LFs
-  const validDoubled = state.doubled.filter(id => lfs.includes(id));
-  if (validDoubled.length !== 2) {
-    errors.push({ el: 'double', msg: 'Bitte genau 2 Leistungsfächer für Doppelgewichtung wählen.' });
-  }
-
   // Block I: entweder 2 FS mit je 4 Kursen ODER 2 NW (inkl. Informatik/NwT) mit je 4 Kursen
   if (lfs.length === 3) {
     const subs = getBlock1Subjects();
@@ -784,27 +798,6 @@ function renderMPFSelects() {
         <option value="">– wählen –</option>${opts}
       </select>
     </div>`;
-  }).join('');
-}
-
-function renderDoubleSelects() {
-  const el = document.getElementById('double-selects');
-  const lfs = state.lf.filter(Boolean);
-  if (lfs.length < 3) {
-    el.innerHTML = '<p class="text-xs text-gray-400">Erst alle 3 LFs wählen.</p>';
-    return;
-  }
-  el.innerHTML = lfs.map(id => {
-    const checked = state.doubled.includes(id);
-    const disabled = !checked && state.doubled.length >= 2 ? 'opacity-50 cursor-not-allowed' : '';
-    return `<label class="flex items-center gap-2 cursor-pointer ${disabled}">
-      <input type="checkbox" value="${id}" ${checked ? 'checked' : ''}
-             ${!checked && state.doubled.length >= 2 ? 'disabled' : ''}
-             onchange="toggleDoubled('${id}', this.checked)"
-             class="w-4 h-4 rounded text-blue-600">
-      <span class="text-sm">${subjectName(id)}</span>
-      ${checked ? '<span class="text-xs text-blue-600 font-semibold">× 2</span>' : ''}
-    </label>`;
   }).join('');
 }
 
@@ -907,14 +900,14 @@ function renderCourseOverview() {
   const el = document.getElementById('course-overview');
 
   // Group by type: LF / Pflicht-Basisfach
-  const { inBlock1 } = calcBlockI();
+  const { inBlock1, doubled } = calcBlockI();
   const extraIds = state.extraCourses.map(e => e.id).filter(Boolean);
 
   // Only show auto-required subjects in the main list (extras shown separately below)
   const rows = subs.filter(sub => !extraIds.includes(sub.id)).map(sub => {
     const b1 = inBlock1.has(sub.id);
     const tag = sub.isLF
-      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF${sub.doubled ? ' ×2' : ''}</span>`
+      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF${doubled.includes(sub.id) ? ' ×2' : ''}</span>`
       : sub.requiredBlock1
         ? `<span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Pflicht</span>`
         : b1
@@ -987,14 +980,14 @@ function renderCourseOverview() {
 
 function renderBlock1() {
   const subs = getBlock1Subjects();
-  const { inBlock1 } = calcBlockI();
+  const { inBlock1, doubled } = calcBlockI();
   const el = document.getElementById('block1-rows');
 
   el.innerHTML = subs.map(sub => {
     const b1 = inBlock1.has(sub.id);
     const rowBg = sub.isLF ? 'bg-blue-50 border border-blue-100' : b1 ? 'bg-gray-50' : 'bg-gray-50 opacity-60';
     const lfBadge = sub.isLF
-      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1 rounded">LF${sub.doubled ? ' ×2' : ''}</span>`
+      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1 rounded">LF${doubled.includes(sub.id) ? ' ×2' : ''}</span>`
       : b1
         ? `<span class="text-xs text-teal-700 bg-teal-50 border border-teal-200 px-1 rounded">Block I</span>`
         : `<span class="text-xs text-gray-400 bg-gray-100 px-1 rounded">Reserve</span>`;
@@ -1206,7 +1199,6 @@ function renderResult() {
 function renderAll() {
   renderLFSelects();
   renderMPFSelects();
-  renderDoubleSelects();
   renderBasisConfig();
   renderCourseOverview();
   renderBlock1();
@@ -1221,30 +1213,11 @@ function renderAll() {
 
 function setLF(i, val) {
   state.lf[i] = val;
-  // remove from doubled if no longer LF
-  state.doubled = state.doubled.filter(id => state.lf.filter(Boolean).includes(id));
-  // auto-set doubled if not set yet
-  if (state.doubled.length < 2) {
-    for (const id of state.lf.filter(Boolean)) {
-      if (!state.doubled.includes(id) && state.doubled.length < 2) {
-        state.doubled.push(id);
-      }
-    }
-  }
   renderAll();
 }
 
 function setMPF(i, val) {
   state.mpf[i] = val;
-  renderAll();
-}
-
-function toggleDoubled(id, checked) {
-  if (checked) {
-    if (state.doubled.length < 2) state.doubled.push(id);
-  } else {
-    state.doubled = state.doubled.filter(d => d !== id);
-  }
   renderAll();
 }
 
