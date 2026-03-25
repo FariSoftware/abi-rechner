@@ -245,6 +245,8 @@ const state = {
   fs1: 'englisch',       // 1. Fremdsprache (if not LF)
   nw1: 'biologie',       // Naturwissenschaft (if not LF)
   kunstMusik: 'kunst',   // Kunst oder Musik
+  // Extra courses added manually in Step 3 to reach 40
+  extraCourses: [],      // [{ id: string, hj: number }]
   // Grades: { key: number } where key = subjectId_hj (1–4)
   grades: {},
   // Block II
@@ -352,12 +354,10 @@ function getBlock1Subjects() {
     }
   }
 
-  // Fill to 40 with Sport
-  const total = subjects.reduce((sum, s) => sum + s.hj, 0);
-  if (total < 40) {
-    const needed = 40 - total;
-    if (!subjects.find(s => s.id === 'sport')) {
-      subjects.push({ id: 'sport', hj: Math.min(needed, 4), isLF: false, doubled: false });
+  // Add user-selected extra courses
+  for (const extra of state.extraCourses) {
+    if (extra.id && !subjects.find(s => s.id === extra.id)) {
+      subjects.push({ id: extra.id, hj: extra.hj, isLF: false, doubled: false });
     }
   }
 
@@ -652,12 +652,43 @@ function renderCourseOverview() {
     </div>`;
   });
 
+  // Already-chosen subject IDs (can't be added again)
+  const usedIds = subs.map(s => s.id);
+
+  // Extra-course controls
+  const extraRows = state.extraCourses.map((ec, i) => {
+    const subOpts = SUBJECTS.filter(s => !usedIds.includes(s.id) || s.id === ec.id)
+      .map(s => `<option value="${s.id}" ${s.id === ec.id ? 'selected' : ''}>${s.name}</option>`).join('');
+    const hjOpts = [1,2,3,4].map(n => `<option value="${n}" ${n === ec.hj ? 'selected' : ''}>${n} Kurs${n>1?'e':''}</option>`).join('');
+    return `<div class="flex items-center gap-2 py-1 px-2 bg-blue-50 border border-blue-100 rounded-lg">
+      <span class="text-xs text-blue-600 font-bold bg-blue-100 px-1.5 py-0.5 rounded">+</span>
+      <select class="flex-1 border border-gray-200 rounded px-2 py-1 text-sm"
+              onchange="updateExtraCourse(${i},'id',this.value)">
+        <option value="">– Fach wählen –</option>${subOpts}
+      </select>
+      <select class="border border-gray-200 rounded px-2 py-1 text-sm"
+              onchange="updateExtraCourse(${i},'hj',parseInt(this.value))">
+        ${hjOpts}
+      </select>
+      <button onclick="removeExtraCourse(${i})"
+              class="text-red-400 hover:text-red-600 font-bold text-lg leading-none px-1">×</button>
+    </div>`;
+  }).join('');
+
+  const remaining = 40 - totalCourses;
+  const addBtn = remaining > 0
+    ? `<button onclick="addExtraCourse()" class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1">
+        <span class="text-lg leading-none">+</span> Weiteres Fach hinzufügen
+        <span class="text-xs text-gray-400 font-normal">(noch ${remaining} Kurs${remaining !== 1 ? 'e' : ''} nötig)</span>
+      </button>`
+    : '';
+
   const summary = `<div class="mt-3 pt-3 border-t flex items-center justify-between">
     <span class="text-sm font-semibold text-gray-600">Gesamt Block I</span>
-    <span class="font-bold ${ok ? 'text-green-700' : 'text-orange-600'}">${totalCourses} / 40 Kurse ${ok ? '✓' : '→ ' + (40 - totalCourses) + ' fehlen'}</span>
+    <span class="font-bold ${ok ? 'text-green-700' : 'text-orange-600'}">${totalCourses} / 40 Kurse ${ok ? '✓' : '→ ' + remaining + ' fehlen'}</span>
   </div>`;
 
-  el.innerHTML = rows.join('') + summary;
+  el.innerHTML = rows.join('') + (extraRows ? `<div class="mt-2 space-y-1">${extraRows}</div>` : '') + addBtn + summary;
 }
 
 function renderBlock1() {
@@ -864,6 +895,21 @@ function toggleDoubled(id, checked) {
   } else {
     state.doubled = state.doubled.filter(d => d !== id);
   }
+  renderAll();
+}
+
+function addExtraCourse() {
+  state.extraCourses.push({ id: '', hj: 4 });
+  renderAll();
+}
+
+function removeExtraCourse(i) {
+  state.extraCourses.splice(i, 1);
+  renderAll();
+}
+
+function updateExtraCourse(i, field, val) {
+  state.extraCourses[i][field] = val;
   renderAll();
 }
 
