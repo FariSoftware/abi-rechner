@@ -321,62 +321,93 @@ function getBlock1Subjects() {
   const lfIds = state.lf.filter(Boolean);
   const subjects = [];
 
-  // 3 LFs
-  for (const id of lfIds) {
-    if (id) subjects.push({ id, hj: 4, isLF: true, doubled: state.doubled.includes(id) });
-  }
-
-  // Required non-LF subjects
-  const addIfNotLF = (id, hj) => {
+  // Mandatory in Block I (requiredBlock1: true)
+  const addRequired = (id, hj) => {
     if (id && !lfIds.includes(id) && !subjects.find(s => s.id === id)) {
-      subjects.push({ id, hj, isLF: false, doubled: false });
+      subjects.push({ id, hj, isLF: false, doubled: false, requiredBlock1: true });
+    }
+  };
+  // Optional for Block I — must be taken, but only included if they improve the grade
+  const addOptional = (id, hj) => {
+    if (id && !lfIds.includes(id) && !subjects.find(s => s.id === id)) {
+      subjects.push({ id, hj, isLF: false, doubled: false, requiredBlock1: false });
     }
   };
 
-  addIfNotLF('deutsch', 4);
-  addIfNotLF('mathematik', 4);
+  // 3 LFs — always required in Block I
+  for (const id of lfIds) {
+    if (id) subjects.push({ id, hj: 4, isLF: true, doubled: state.doubled.includes(id), requiredBlock1: true });
+  }
+
+  addRequired('deutsch', 4);
+  addRequired('mathematik', 4);
 
   // 1. Fremdsprache
   const fs1 = lfIds.find(id => subjectMap[id]?.isFS) || (!lfIds.includes(state.fs1) ? state.fs1 : null);
-  if (fs1 && !lfIds.includes(fs1)) addIfNotLF(fs1, 4);
+  if (fs1 && !lfIds.includes(fs1)) addRequired(fs1, 4);
 
   // Naturwissenschaft
   const nw1 = lfIds.find(id => subjectMap[id]?.isNW) || (!lfIds.includes(state.nw1) ? state.nw1 : null);
-  if (nw1 && !lfIds.includes(nw1)) addIfNotLF(nw1, 4);
+  if (nw1 && !lfIds.includes(nw1)) addRequired(nw1, 4);
 
-  addIfNotLF('geschichte', 4);
+  addRequired('geschichte', 4);
 
-  // Geographie & Gemeinschaftskunde — 2 courses each (4 if chosen as mPF)
+  // Geographie & Gemeinschaftskunde
   const geo_hj = state.mpf.includes('geographie') ? 4 : 2;
   const gk_hj  = state.mpf.includes('gemeinschaftskunde') ? 4 : 2;
-  addIfNotLF('geographie', geo_hj);
-  addIfNotLF('gemeinschaftskunde', gk_hj);
+  addRequired('geographie', geo_hj);
+  addRequired('gemeinschaftskunde', gk_hj);
 
   // Kunst oder Musik
-  const km = state.kunstMusik || 'kunst';
-  addIfNotLF(km, 2);
+  addRequired(state.kunstMusik || 'kunst', 2);
 
-  // Religionslehre/Ethik (Pflicht)
-  addIfNotLF('religion', 2);
-
-  // Sport (Pflicht)
-  addIfNotLF('sport', 2);
-
-  // mündliche PFs (if not already in list)
+  // mündliche PFs — required in Block I
   for (const id of state.mpf) {
     if (id && !subjects.find(s => s.id === id)) {
-      subjects.push({ id, hj: 4, isLF: false, doubled: false });
+      subjects.push({ id, hj: 4, isLF: false, doubled: false, requiredBlock1: true });
     }
   }
 
-  // Add user-selected extra courses
+  // Religion & Sport — must be taken, but optional for Block I
+  addOptional('religion', 2);
+  addOptional('sport', 2);
+
+  // User-added extra courses — also optional for Block I
   for (const extra of state.extraCourses) {
     if (extra.id && !subjects.find(s => s.id === extra.id)) {
-      subjects.push({ id: extra.id, hj: extra.hj, isLF: false, doubled: false });
+      subjects.push({ id: extra.id, hj: extra.hj, isLF: false, doubled: false, requiredBlock1: false });
     }
   }
 
   return subjects;
+}
+
+// Which courses actually end up in Block I?
+// Required ones always in; optional ones: pick best by score to fill to 40.
+function selectBlock1Courses(allSubjects) {
+  const required = allSubjects.filter(s => s.requiredBlock1);
+  const optional = allSubjects.filter(s => !s.requiredBlock1);
+
+  const requiredCount = required.reduce((sum, s) => sum + s.hj, 0);
+  const slotsLeft = 40 - requiredCount;
+
+  // Score each optional subject (sum of grades, avg per course for fair comparison)
+  const scored = optional.map(sub => {
+    const sum = Array.from({length: sub.hj}, (_, j) => ptVal(`${sub.id}_${j+1}`) ?? 0).reduce((a,b)=>a+b,0);
+    return { ...sub, score: sum };
+  }).sort((a, b) => b.score - a.score);
+
+  // Fill slots with best optional courses
+  const included = new Set(required.map(s => s.id));
+  let filled = 0;
+  for (const sub of scored) {
+    if (filled + sub.hj <= slotsLeft) {
+      included.add(sub.id);
+      filled += sub.hj;
+    }
+  }
+
+  return included; // Set of subject IDs in Block I
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -384,42 +415,38 @@ function getBlock1Subjects() {
 // ══════════════════════════════════════════════════════════════
 
 function calcBlockI() {
-  const subs = getBlock1Subjects();
-  let sumAll = 0, sumDoubled = 0, totalCourses = 0;
+  const allSubs = getBlock1Subjects();
+  const totalPlanned = allSubs.reduce((sum, s) => sum + s.hj, 0);
+  const inBlock1 = selectBlock1Courses(allSubs);
+
+  let sumAll = 0, sumDoubled = 0, coursesInBlock1 = 0;
   let unterpunktet = 0, unterpunktetLF = 0, hasZero = false;
   const issues = [];
 
-  for (const sub of subs) {
+  for (const sub of allSubs) {
+    if (!inBlock1.has(sub.id)) continue;
     for (let hj = 1; hj <= sub.hj; hj++) {
       const v = ptVal(`${sub.id}_${hj}`);
       const pts = v === null ? 0 : v;
       sumAll += pts;
-      totalCourses++;
+      coursesInBlock1++;
       if (sub.doubled) sumDoubled += pts;
-      if (pts < 5) {
-        unterpunktet++;
-        if (sub.isLF) unterpunktetLF++;
-      }
+      if (pts < 5) { unterpunktet++; if (sub.isLF) unterpunktetLF++; }
       if (pts === 0) hasZero = true;
     }
   }
 
-  // Normalize to 40 courses for formula
-  const b1 = totalCourses === 48
-    ? Math.round((sumAll + sumDoubled) * 40 / 48)
-    : Math.round((sumAll + sumDoubled) * 40 / (totalCourses + (state.doubled.length * 4)));
-
-  // Use correct formula regardless
   const doubledCount = state.doubled.filter(Boolean).length * 4;
-  const denominator = totalCourses + doubledCount;
-  const block1 = Math.round((sumAll + sumDoubled) * 40 / denominator);
+  const denominator = coursesInBlock1 + doubledCount;
+  const block1 = denominator > 0 ? Math.round((sumAll + sumDoubled) * 40 / denominator) : 0;
 
+  if (totalPlanned < 42) issues.push(`Mindestens 42 Kurse belegen (aktuell ${totalPlanned})`);
   if (unterpunktet > 8) issues.push(`Block I: ${unterpunktet} Kurse unter 5 Punkten (max. 8 erlaubt)`);
   if (unterpunktetLF > 3) issues.push(`Block I: ${unterpunktetLF} LF-Kurse unter 5 Punkten (max. 3 erlaubt)`);
   if (hasZero) issues.push('Block I: Kein Kurs darf 0 Punkte haben');
   if (block1 < 200) issues.push(`Block I: Mindestens 200 Punkte nötig (aktuell ${block1})`);
 
-  return { block1, totalCourses, sumAll, issues };
+  return { block1, totalPlanned, coursesInBlock1, inBlock1, issues };
 }
 
 function calcBlockII() {
@@ -642,20 +669,28 @@ function renderBasisConfig() {
 function renderCourseOverview() {
   const subs = getBlock1Subjects();
   const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
+  const MIN_COURSES = 42;
 
   const counterEl = document.getElementById('course-counter');
-  const ok = totalCourses === 40;
+  const ok = totalCourses >= MIN_COURSES;
   counterEl.innerHTML = ok
-    ? `<span class="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full">✓ ${totalCourses} / 40 Kurse</span>`
-    : `<span class="text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full">⚠ ${totalCourses} / 40 Kurse</span>`;
+    ? `<span class="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full">✓ ${totalCourses} Kurse (mind. ${MIN_COURSES})</span>`
+    : `<span class="text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full">⚠ ${totalCourses} / ${MIN_COURSES} Kurse</span>`;
 
   const el = document.getElementById('course-overview');
 
   // Group by type: LF / Pflicht-Basisfach
+  const { inBlock1 } = calcBlockI();
+
   const rows = subs.map(sub => {
+    const b1 = inBlock1.has(sub.id);
     const tag = sub.isLF
       ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF${sub.doubled ? ' ×2' : ''}</span>`
-      : `<span class="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">Basis</span>`;
+      : sub.requiredBlock1
+        ? `<span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Pflicht</span>`
+        : b1
+          ? `<span class="text-xs text-teal-700 bg-teal-50 border border-teal-200 px-1.5 py-0.5 rounded">Block I</span>`
+          : `<span class="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded">Reserve</span>`;
     const hjBadges = Array.from({length: sub.hj}, (_, j) =>
       `<span class="text-xs text-gray-500 bg-gray-100 px-1 rounded">HJ${j+1}</span>`
     ).join(' ');
@@ -697,17 +732,21 @@ function renderCourseOverview() {
     </div>`;
   }).join('');
 
-  const remaining = 40 - totalCourses;
-  const addBtn = remaining > 0
-    ? `<button onclick="addExtraCourse()" class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1">
-        <span class="text-lg leading-none">+</span> Weiteres Fach hinzufügen
-        <span class="text-xs text-gray-400 font-normal">(noch ${remaining} Kurs${remaining !== 1 ? 'e' : ''} nötig)</span>
-      </button>`
-    : '';
+  const remaining = MIN_COURSES - totalCourses;
+  const addBtn = `<button onclick="addExtraCourse()" class="mt-2 text-sm text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1">
+      <span class="text-lg leading-none">+</span> Weiteres Fach hinzufügen
+      ${remaining > 0 ? `<span class="text-xs text-orange-500 font-normal">(noch ${remaining} Kurs${remaining !== 1 ? 'e' : ''} bis Minimum)</span>` : ''}
+    </button>`;
 
-  const summary = `<div class="mt-3 pt-3 border-t flex items-center justify-between">
-    <span class="text-sm font-semibold text-gray-600">Gesamt Block I</span>
-    <span class="font-bold ${ok ? 'text-green-700' : 'text-orange-600'}">${totalCourses} / 40 Kurse ${ok ? '✓' : '→ ' + remaining + ' fehlen'}</span>
+  const summary = `<div class="mt-3 pt-3 border-t space-y-1">
+    <div class="flex items-center justify-between">
+      <span class="text-sm font-semibold text-gray-600">Gesamt belegte Kurse</span>
+      <span class="font-bold ${ok ? 'text-green-700' : 'text-orange-600'}">${totalCourses} ${ok ? '✓' : '/ ' + MIN_COURSES + ' mind.'}</span>
+    </div>
+    <div class="flex items-center justify-between text-xs text-gray-400">
+      <span>davon in Block I eingebracht</span>
+      <span class="font-semibold text-gray-600">${inBlock1.size > 0 ? [...inBlock1].reduce((s,id) => s + (subs.find(x=>x.id===id)?.hj||0), 0) : '–'} / 40</span>
+    </div>
   </div>`;
 
   const extraSection = state.extraCourses.length > 0 || remaining > 0
@@ -719,16 +758,17 @@ function renderCourseOverview() {
 
 function renderBlock1() {
   const subs = getBlock1Subjects();
+  const { inBlock1 } = calcBlockI();
   const el = document.getElementById('block1-rows');
-  const counterEl = document.getElementById('course-counter');
-
-  const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
-  const counterColor = totalCourses === 40 ? 'text-green-600' : 'text-orange-600';
-  counterEl.innerHTML = `<span class="${counterColor} font-semibold">${totalCourses} / 40 Kurse</span>`;
 
   el.innerHTML = subs.map(sub => {
-    const rowBg = sub.isLF ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50';
-    const lfBadge = sub.isLF ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1 rounded">LF${sub.doubled ? ' ×2' : ''}</span>` : '';
+    const b1 = inBlock1.has(sub.id);
+    const rowBg = sub.isLF ? 'bg-blue-50 border border-blue-100' : b1 ? 'bg-gray-50' : 'bg-gray-50 opacity-60';
+    const lfBadge = sub.isLF
+      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1 rounded">LF${sub.doubled ? ' ×2' : ''}</span>`
+      : b1
+        ? `<span class="text-xs text-teal-700 bg-teal-50 border border-teal-200 px-1 rounded">Block I</span>`
+        : `<span class="text-xs text-gray-400 bg-gray-100 px-1 rounded">Reserve</span>`;
     const sum = Array.from({length: sub.hj}, (_, j) => ptVal(`${sub.id}_${j+1}`) ?? 0).reduce((a, b) => a + b, 0);
     const avg = sub.hj > 0 ? sum / sub.hj : 0;
     const avgNote = POINTS_TO_NOTE[Math.round(avg)] || '–';
