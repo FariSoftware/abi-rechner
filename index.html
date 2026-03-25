@@ -201,7 +201,11 @@
         <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
         Block I – Kursnoten
       </h2>
-      <p class="text-xs text-gray-500 mb-4 ml-8">Punkte 0–15 eingeben. Genau 40 Kurse fließen in die Berechnung ein.</p>
+      <p class="text-xs text-gray-500 mb-1 ml-8">Punkte 0–15 eingeben. Genau 40 Kurse fließen in die Berechnung ein.</p>
+      <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 ml-8 mb-4 flex items-center gap-1.5">
+        <span>✨</span>
+        <span>Die <strong>2 Leistungsfächer mit der besten Gewichtung</strong> werden automatisch doppelt gewertet <span class="text-amber-500 font-bold">(×2)</span> – du musst nichts manuell auswählen.</span>
+      </p>
 
       <!-- Column headers -->
       <div class="hidden sm:grid text-xs text-gray-400 font-semibold mb-1 px-1" style="grid-template-columns: 1fr 3.5rem 3.5rem 3.5rem 3.5rem 2.5rem 4rem">
@@ -907,7 +911,9 @@ function renderCourseOverview() {
   const rows = subs.filter(sub => !extraIds.includes(sub.id)).map(sub => {
     const b1 = inBlock1.has(sub.id);
     const tag = sub.isLF
-      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF${doubled.includes(sub.id) ? ' ×2' : ''}</span>`
+      ? doubled.includes(sub.id)
+        ? `<span class="text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">LF ×2</span>`
+        : `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF</span>`
       : sub.requiredBlock1
         ? `<span class="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">Pflicht</span>`
         : b1
@@ -987,7 +993,9 @@ function renderBlock1() {
     const b1 = inBlock1.has(sub.id);
     const rowBg = sub.isLF ? 'bg-blue-50 border border-blue-100' : b1 ? 'bg-gray-50' : 'bg-gray-50 opacity-60';
     const lfBadge = sub.isLF
-      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1 rounded">LF${doubled.includes(sub.id) ? ' ×2' : ''}</span>`
+      ? doubled.includes(sub.id)
+        ? `<span class="text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">LF ×2</span>`
+        : `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF</span>`
       : b1
         ? `<span class="text-xs text-teal-700 bg-teal-50 border border-teal-200 px-1 rounded">Block I</span>`
         : `<span class="text-xs text-gray-400 bg-gray-100 px-1 rounded">Reserve</span>`;
