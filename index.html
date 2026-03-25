@@ -344,8 +344,11 @@ function getBlock1Subjects() {
   const km = state.kunstMusik || 'kunst';
   addIfNotLF(km, 2);
 
-  // Religionslehre/Ethik
+  // Religionslehre/Ethik (Pflicht)
   addIfNotLF('religion', 2);
+
+  // Sport (Pflicht)
+  addIfNotLF('sport', 2);
 
   // mündliche PFs (if not already in list)
   for (const id of state.mpf) {
@@ -652,8 +655,15 @@ function renderCourseOverview() {
     </div>`;
   });
 
-  // Already-chosen subject IDs (can't be added again)
+  // Already-chosen subject IDs (can't be added again as extra)
   const usedIds = subs.map(s => s.id);
+
+  // Section divider before free-choice courses
+  const divider = `<div class="my-2 flex items-center gap-2">
+    <div class="flex-1 border-t border-dashed border-gray-300"></div>
+    <span class="text-xs text-gray-400 font-semibold uppercase">Freie Wahl</span>
+    <div class="flex-1 border-t border-dashed border-gray-300"></div>
+  </div>`;
 
   // Extra-course controls
   const extraRows = state.extraCourses.map((ec, i) => {
@@ -688,7 +698,11 @@ function renderCourseOverview() {
     <span class="font-bold ${ok ? 'text-green-700' : 'text-orange-600'}">${totalCourses} / 40 Kurse ${ok ? '✓' : '→ ' + remaining + ' fehlen'}</span>
   </div>`;
 
-  el.innerHTML = rows.join('') + (extraRows ? `<div class="mt-2 space-y-1">${extraRows}</div>` : '') + addBtn + summary;
+  const extraSection = state.extraCourses.length > 0 || remaining > 0
+    ? divider + (extraRows ? `<div class="space-y-1">${extraRows}</div>` : '') + addBtn
+    : '';
+
+  el.innerHTML = rows.join('') + extraSection + summary;
 }
 
 function renderBlock1() {
