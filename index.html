@@ -186,6 +186,7 @@
           <span>Überblick über Block-I-Kurse. Genau 40 werden eingebracht</span>
           <span class="text-gray-300">·</span>
           <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF</span> Leistungsfach
+          <span class="font-bold text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">LF ×2</span> doppelt gewichtet
           <span class="font-bold text-violet-700 bg-violet-100 border border-violet-200 px-1.5 py-0.5 rounded">BF</span> Geprüftes Basisfach
           <span class="font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">PF</span> Pflichtfach
           <span class="text-gray-400 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded">WF</span> Wahlfach
@@ -1011,7 +1012,9 @@ function renderBlock1() {
         : `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded" title="Leistungsfach">LF</span>`
       : b1MpfIds.includes(sub.id)
         ? `<span class="text-xs font-bold text-violet-700 bg-violet-100 border border-violet-200 px-1 rounded" title="Geprüftes Basisfach">BF</span>`
-        : '';
+        : sub.requiredBlock1
+          ? `<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-1 rounded" title="Pflichtfach">PF</span>`
+          : `<span class="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-1 rounded" title="Wahlfach">WF</span>`;
     const sum = Array.from({length: sub.hj}, (_, j) => ptVal(`${sub.id}_${j+1}`) ?? 0).reduce((a, b) => a + b, 0);
     const avg = sub.hj > 0 ? sum / sub.hj : 0;
     const avgNote = POINTS_TO_NOTE[Math.round(avg)] || '–';
