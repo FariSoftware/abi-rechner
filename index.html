@@ -30,9 +30,21 @@
 <body class="bg-slate-100 min-h-screen text-gray-800">
 
 <header class="bg-blue-800 text-white shadow-lg">
-  <div class="max-w-7xl mx-auto px-4 py-4">
-    <h1 class="text-xl font-bold">🎓 Abitur BW 2028 – Notenrechner</h1>
-    <p class="text-blue-200 text-sm mt-0.5">Allgemeinbildendes Gymnasium · Qualifikationsphase · Alle Daten bleiben lokal in deinem Browser</p>
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="text-xl font-bold">🎓 Abitur BW 2028 – Notenrechner</h1>
+      <p class="text-blue-200 text-sm mt-0.5">Allgemeinbildendes Gymnasium · Qualifikationsphase · Alle Daten bleiben lokal in deinem Browser</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="saveState()"
+              class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-600 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
+        💾 Speichern
+      </button>
+      <label class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+        📂 Laden
+        <input type="file" accept=".json" class="hidden" onchange="loadState(event)">
+      </label>
+    </div>
   </div>
 </header>
 
@@ -937,6 +949,52 @@ function setGrade(key, val) {
   // Re-render block1 errors only (avoid full re-render)
   const { issues } = calcBlockI();
   document.getElementById('block1-errors').innerHTML = issues.map(m => errorEl(m)).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SAVE / LOAD
+// ══════════════════════════════════════════════════════════════
+
+function saveState() {
+  const data = JSON.stringify({ version: 1, state }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'abitur-planung.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadState(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const loaded = parsed.version === 1 ? parsed.state : parsed;
+      // Merge loaded state into current state (keep defaults for missing keys)
+      Object.assign(state, loaded);
+      renderAll();
+      // Show brief success toast
+      showToast('✓ Stand erfolgreich geladen');
+    } catch {
+      showToast('⚠ Datei konnte nicht geladen werden', true);
+    }
+  };
+  reader.readAsText(file);
+  // Reset file input so the same file can be loaded again
+  event.target.value = '';
+}
+
+function showToast(msg, isError = false) {
+  const toast = document.createElement('div');
+  toast.textContent = msg;
+  toast.className = `fixed bottom-4 right-4 z-50 px-4 py-2 rounded-lg text-white text-sm font-semibold shadow-lg transition-opacity
+    ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 2500);
 }
 
 // ══════════════════════════════════════════════════════════════
