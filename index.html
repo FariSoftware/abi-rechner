@@ -99,6 +99,7 @@
       </h2>
       <p class="text-xs text-gray-500 mb-4 ml-8">Überblick über die geplanten Block-I-Kurse. Genau 40 Kurse müssen eingebracht werden.</p>
       <div id="course-overview" class="space-y-1"></div>
+      <div id="overview-errors" class="mt-2 space-y-1"></div>
     </div>
 
     <!-- ── DIVIDER: Notenrechner ── -->
@@ -563,7 +564,7 @@ function validateConfig() {
     const nwIds = ['biologie','chemie','physik','informatik','nwt'];
     const nwCount = subIds.filter(id => nwIds.includes(id)).length;
     if (fsCount < 2 && nwCount < 2) {
-      errors.push({ el: 'lf', msg: 'Block I muss entweder mind. 2 Fremdsprachen oder mind. 2 Naturwissenschaften (je 4 Kurse) enthalten.' });
+      errors.push({ el: 'overview', msg: 'Block I muss entweder mind. 2 Fremdsprachen oder mind. 2 Naturwissenschaften (je 4 Kurse) enthalten.' });
     }
   }
 
@@ -932,6 +933,8 @@ function renderResult() {
   document.getElementById('lf-errors').innerHTML = lfErr.map(e => errorEl(e.msg, 'warn')).join('');
   const mpfErr = configErrors.filter(e => e.el === 'mpf');
   document.getElementById('mpf-errors').innerHTML = mpfErr.map(e => errorEl(e.msg, 'warn')).join('');
+  const overviewErr = configErrors.filter(e => e.el === 'overview');
+  document.getElementById('overview-errors').innerHTML = overviewErr.map(e => errorEl(e.msg, 'warn')).join('');
 }
 
 function renderAll() {
