@@ -30,17 +30,46 @@
       border-radius: 0.375rem; padding: 0.25rem 0;
       font-size: 0.9rem; font-weight: 600;
     }
-    /* Bigger touch targets on mobile */
-    @media (max-width: 640px) {
-      .pts-input { width: 3.2rem; padding: 0.4rem 0; font-size: 1rem; }
-      select { font-size: 1rem; }
-    }
+    /* iOS zoom prevention: inputs must be 16px+ */
+    input[type=number] { font-size: 1rem; }
     .pts-input:focus { outline: 2px solid #3b82f6; border-color: transparent; }
 
     .badge {
       display: inline-flex; align-items: center; justify-content: center;
       min-width: 2.2rem; height: 1.4rem; border-radius: 9999px;
       font-size: 0.65rem; font-weight: 700; padding: 0 0.35rem;
+    }
+
+    /* ── Touch targets (min 44 px) ── */
+    @media (max-width: 1023px) {
+      select { min-height: 44px; padding-top: 0.5rem; padding-bottom: 0.5rem; font-size: 1rem; }
+      button { min-height: 44px; }
+      input[type=checkbox] { width: 1.25rem !important; height: 1.25rem !important; }
+      label.checkbox-label { min-height: 44px; display: flex; align-items: center; }
+      .pts-input { min-height: 44px !important; width: 3.4rem !important; font-size: 1rem !important; }
+    }
+
+    /* ── Collapsible accordion steps (mobile only) ── */
+    .step-body { overflow: hidden; transition: max-height 0.3s ease-out; max-height: 4000px; }
+    .step-body.step-hidden { max-height: 0 !important; }
+    @media (min-width: 1024px) {
+      .step-body { max-height: none !important; overflow: visible !important; }
+      /* On desktop: button looks like a normal heading (no pointer cursor, no toggle) */
+      .step-toggle-btn { cursor: default; pointer-events: none; }
+    }
+
+    /* ── Mobile result panel (slide-up breakdown) ── */
+    #mobile-result-panel {
+      display: none;
+      position: fixed; bottom: 5rem; left: 0; right: 0; z-index: 39;
+      background: #1e3a8a; color: white;
+      padding: 1rem; border-top: 2px solid rgba(255,255,255,0.2);
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+      max-height: 60vh; overflow-y: auto;
+    }
+    @media (max-width: 1023px) {
+      #mobile-result-panel { display: block; }
+      #mobile-result-panel.panel-hidden { display: none; }
     }
 
     /* Grade row: desktop inline, mobile stacked */
@@ -104,22 +133,31 @@
   <div class="flex-1 min-w-0 space-y-4">
 
     <!-- ── SCHRITT 1: LEISTUNGSFÄCHER ── -->
-    <div class="bg-white rounded-xl shadow p-5">
-      <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
-        Leistungsfächer wählen
-      </h2>
-      <p class="text-xs text-gray-500 mb-3">3 Leistungsfächer · 2 davon müssen aus Deutsch, Mathe, Fremdsprache oder Naturwissenschaft stammen</p>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="lf-selects"></div>
-      <div id="lf-errors" class="mt-2 space-y-1"></div>
+    <div class="bg-white rounded-xl shadow">
+      <div class="p-5 pb-3">
+        <button class="step-toggle-btn w-full text-left flex items-center gap-2 group" onclick="toggleStep('step1-body', this)" aria-expanded="true">
+          <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
+          <h2 class="font-bold text-blue-800 text-base flex-1">Leistungsfächer wählen</h2>
+          <span class="step-chevron text-blue-400 text-sm transition-transform duration-300 lg:hidden">▼</span>
+        </button>
+      </div>
+      <div id="step1-body" class="step-body px-5 pb-5">
+        <p class="text-xs text-gray-500 mb-3">3 Leistungsfächer · 2 davon müssen aus Deutsch, Mathe, Fremdsprache oder Naturwissenschaft stammen</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="lf-selects"></div>
+        <div id="lf-errors" class="mt-2 space-y-1"></div>
+      </div>
     </div>
 
     <!-- ── SCHRITT 2: KONFIGURATION ── -->
-    <div class="bg-white rounded-xl shadow p-5">
-      <h2 class="font-bold text-blue-800 text-base mb-3 flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
-        Prüfungskonfiguration
-      </h2>
+    <div class="bg-white rounded-xl shadow">
+      <div class="p-5 pb-3">
+        <button class="step-toggle-btn w-full text-left flex items-center gap-2 group" onclick="toggleStep('step2-body', this)" aria-expanded="true">
+          <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+          <h2 class="font-bold text-blue-800 text-base flex-1">Prüfungskonfiguration</h2>
+          <span class="step-chevron text-blue-400 text-sm transition-transform duration-300 lg:hidden">▼</span>
+        </button>
+      </div>
+      <div id="step2-body" class="step-body px-5 pb-5">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <!-- mündliche PFs -->
         <div>
@@ -138,19 +176,25 @@
         <p class="text-sm font-semibold text-gray-700 mb-2">Pflicht-Basisfächer <span class="text-gray-400 font-normal">(für Block I)</span></p>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="basis-config"></div>
       </div>
+      </div><!-- /step2-body -->
     </div>
 
     <!-- ── KURSÜBERSICHT (Planung, ohne Noten) ── -->
-    <div class="bg-white rounded-xl shadow p-5">
-      <h2 class="font-bold text-blue-800 text-base mb-1 flex items-center gap-2">
-        <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
-        Kursübersicht – Block I
-        <span id="course-counter" class="ml-auto text-xs font-normal"></span>
-      </h2>
-      <p class="text-xs text-gray-500 mb-4 ml-8">Überblick über die geplanten Block-I-Kurse. Genau 40 Kurse müssen eingebracht werden.</p>
-      <div id="overview-config" class="mb-3"></div>
-      <div id="course-overview" class="space-y-1"></div>
-      <div id="overview-errors" class="mt-2 space-y-1"></div>
+    <div class="bg-white rounded-xl shadow">
+      <div class="p-5 pb-3">
+        <button class="step-toggle-btn w-full text-left flex items-center gap-2 group" onclick="toggleStep('step3-body', this)" aria-expanded="true">
+          <span class="w-6 h-6 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
+          <h2 class="font-bold text-blue-800 text-base flex-1">Kursübersicht – Block I</h2>
+          <span id="course-counter" class="text-xs font-normal mr-1"></span>
+          <span class="step-chevron text-blue-400 text-sm transition-transform duration-300 lg:hidden">▼</span>
+        </button>
+      </div>
+      <div id="step3-body" class="step-body px-5 pb-5">
+        <p class="text-xs text-gray-500 mb-4">Überblick über die geplanten Block-I-Kurse. Genau 40 Kurse müssen eingebracht werden.</p>
+        <div id="overview-config" class="mb-3"></div>
+        <div id="course-overview" class="space-y-1"></div>
+        <div id="overview-errors" class="mt-2 space-y-1"></div>
+      </div>
     </div>
 
     <!-- ── DIVIDER: Notenrechner ── -->
@@ -246,10 +290,44 @@
 
 </div><!-- /grid -->
 
+<!-- ══ MOBILE EXPANDABLE RESULT PANEL ══ -->
+<div id="mobile-result-panel" class="panel-hidden">
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="font-bold text-white text-sm">Ergebnis – Aufschlüsselung</h3>
+    <button onclick="toggleResultPanel()" class="text-blue-200 text-lg leading-none px-2" style="min-height:auto">✕</button>
+  </div>
+  <div class="grid grid-cols-3 gap-3 mb-4 text-center">
+    <div>
+      <div class="text-xs text-blue-300 mb-1">Block I</div>
+      <div id="mbp-b1" class="font-bold text-xl text-white">–</div>
+      <div class="text-xs text-blue-300">/ 600</div>
+    </div>
+    <div>
+      <div class="text-xs text-blue-300 mb-1">Block II</div>
+      <div id="mbp-b2" class="font-bold text-xl text-white">–</div>
+      <div class="text-xs text-blue-300">/ 300</div>
+    </div>
+    <div>
+      <div class="text-xs text-blue-300 mb-1">Gesamt</div>
+      <div id="mbp-total" class="font-bold text-xl text-white">–</div>
+      <div class="text-xs text-blue-300">/ 900</div>
+    </div>
+  </div>
+  <div class="border-t border-blue-700 pt-3">
+    <p class="text-xs text-blue-300 font-semibold mb-2">Block II – Einzelwertung</p>
+    <div id="mbp-b2-detail" class="space-y-1 text-sm"></div>
+  </div>
+  <div id="mbp-warnings" class="mt-3 hidden">
+    <p class="text-xs text-yellow-300 font-semibold mb-1">⚠ Hinweise</p>
+    <div id="mbp-warnings-list" class="space-y-1 text-xs text-yellow-100"></div>
+  </div>
+</div>
+
 <!-- ══ MOBILE STICKY RESULT BAR ══ -->
 <div id="mobile-result-bar"
      class="fixed bottom-0 left-0 right-0 z-40 bg-blue-800 text-white shadow-2xl
-            items-center justify-between px-4 py-2 gap-3">
+            items-center justify-between px-4 py-2 gap-3 cursor-pointer"
+     onclick="toggleResultPanel()" role="button" aria-expanded="false" aria-label="Ergebnis anzeigen">
   <div class="flex items-center gap-3 flex-1">
     <div class="text-xs text-blue-200">Block I</div>
     <div id="mb-b1" class="font-bold text-sm">–</div>
@@ -266,6 +344,7 @@
       <div id="mb-note" class="text-xl font-black text-blue-800">–</div>
     </div>
     <div id="mb-status" class="text-xs font-bold"></div>
+    <div class="text-blue-300 text-sm">▲</div>
   </div>
 </div>
 
@@ -1046,6 +1125,13 @@ function renderResult() {
   document.getElementById('mb-b2').textContent = block2;
   document.getElementById('mb-total').textContent = `${total} / 900`;
   document.getElementById('mb-note').textContent = grade || '–';
+  // Mobile panel
+  const mbpB1 = document.getElementById('mbp-b1');
+  const mbpB2 = document.getElementById('mbp-b2');
+  const mbpTotal = document.getElementById('mbp-total');
+  if (mbpB1) mbpB1.textContent = `${block1}`;
+  if (mbpB2) mbpB2.textContent = `${block2}`;
+  if (mbpTotal) mbpTotal.textContent = `${total}`;
 
   const configErrors = validateConfig();
   const allIssues = [...configErrors.map(e => e.msg), ...b1issues, ...b2issues];
@@ -1061,22 +1147,31 @@ function renderResult() {
   }
 
   // B2 detail
-  const detailEl = document.getElementById('r-b2-detail');
-  detailEl.innerHTML = detail.map(d =>
+  const detailHtml = detail.map(d =>
     `<div class="flex justify-between ${d.ok ? '' : 'text-red-600'}">
       <span>${d.name}</span>
       <span class="font-semibold">${d.pts} P</span>
     </div>`
   ).join('');
+  const detailEl = document.getElementById('r-b2-detail');
+  detailEl.innerHTML = detailHtml;
+  const mbpDetailEl = document.getElementById('mbp-b2-detail');
+  if (mbpDetailEl) mbpDetailEl.innerHTML = detailHtml;
 
   // Warnings
   const wEl = document.getElementById('r-warnings');
   const wListEl = document.getElementById('r-warnings-list');
+  const mbpWarn = document.getElementById('mbp-warnings');
+  const mbpWarnList = document.getElementById('mbp-warnings-list');
   if (allIssues.length > 0) {
     wEl.classList.remove('hidden');
+    const issueHtml = allIssues.map(m => `<div>• ${m}</div>`).join('');
     wListEl.innerHTML = allIssues.map(m => `<div class="text-orange-700">• ${m}</div>`).join('');
+    if (mbpWarn) mbpWarn.classList.remove('hidden');
+    if (mbpWarnList) mbpWarnList.innerHTML = issueHtml;
   } else {
     wEl.classList.add('hidden');
+    if (mbpWarn) mbpWarn.classList.add('hidden');
   }
 
   // LF errors
@@ -1221,6 +1316,30 @@ function restoreState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) Object.assign(state, JSON.parse(raw));
   } catch {}
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MOBILE UI HELPERS
+// ══════════════════════════════════════════════════════════════
+
+function toggleStep(bodyId, btn) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  const hidden = body.classList.toggle('step-hidden');
+  const chevron = btn.querySelector('.step-chevron');
+  if (chevron) chevron.style.transform = hidden ? 'rotate(-90deg)' : '';
+  btn.setAttribute('aria-expanded', String(!hidden));
+}
+
+let resultPanelOpen = false;
+function toggleResultPanel() {
+  resultPanelOpen = !resultPanelOpen;
+  const panel = document.getElementById('mobile-result-panel');
+  const bar   = document.getElementById('mobile-result-bar');
+  const arrow = bar ? bar.querySelector('.text-blue-300') : null;
+  if (panel) panel.classList.toggle('panel-hidden', !resultPanelOpen);
+  if (bar)   bar.setAttribute('aria-expanded', String(resultPanelOpen));
+  if (arrow) arrow.textContent = resultPanelOpen ? '▼' : '▲';
 }
 
 // ══════════════════════════════════════════════════════════════
