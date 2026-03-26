@@ -530,13 +530,10 @@ function isCoreEligible(id) {
 
 const FLOWCHART_LF_RULES = {
 //  LF1 Kategorie  →  erlaubte Kategorien für LF2
-  D:    null,                           // TODO: aus Flussdiagramm ergänzen
-  M:    null,                           // TODO: aus Flussdiagramm ergänzen
-  FS:   null,                           // TODO: aus Flussdiagramm ergänzen
+  D:    new Set(['M', 'FS', 'NW']),
+  M:    new Set(['D', 'FS', 'NW']),
+  FS:   new Set(['D', 'M' ,'NW']), 
   NW:   new Set(['D','M','FS']),         // PDF S.11 bestätigt: LF1=NW → LF2 nur D/M/FS
-  GW:   null,                           // TODO: aus Flussdiagramm ergänzen
-  KMS:  null,                           // TODO: aus Flussdiagramm ergänzen
-  FREE: null,                           // TODO: aus Flussdiagramm ergänzen
 };
 
 const LF_CATEGORY_NAME = {
