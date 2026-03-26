@@ -1150,7 +1150,7 @@ function renderBlock2() {
     const v = state.b2mpf[i] ?? '';
     const pts4 = v !== '' ? parseInt(v) * 4 : '–';
     const label = `<span class="text-gray-800">${subjectName(id) || `mPF ${i+1}`}</span>`;
-    return b2Row('bg-gray-50', label, undefined, v, false,
+    return b2Row('bg-gray-50', label, undefined, v, true,
       pts4 !== '–' ? pts4 + ' P' : '–', 'Formel: m × 4',
       '', `withFocusRestore('block2-rows', ()=>{state.b2mpf[${i}]=this.value;renderAll()})`, null);
   });
