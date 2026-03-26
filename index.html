@@ -1326,6 +1326,13 @@ document.addEventListener('keydown', e => {
   _tabWasPressed = e.key === 'Tab';
 }, true);
 
+// Select all text when a pts-input receives focus (makes overwriting easier)
+document.addEventListener('focusin', e => {
+  if (e.target.classList.contains('pts-input')) {
+    e.target.select();
+  }
+});
+
 function visibleBlock1Inputs() {
   const container = document.getElementById('block1-rows');
   if (!container) return [];
