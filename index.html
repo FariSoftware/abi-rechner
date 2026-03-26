@@ -1787,25 +1787,26 @@ function _buildWahlbogenPDF() {
   ];
   while (pruefFaecher.length < 5) pruefFaecher.push({ nr:pruefFaecher.length+1, af:'', name:'', pruef:'', isLF:false });
 
+  const PF_ROW_H = 7;
   for (const pf of pruefFaecher) {
-    fr(ML, y, PF_W, 5.5, pf.nr%2===0?[248,250,252]:[255,255,255]);
+    fr(ML, y, PF_W, PF_ROW_H, pf.nr%2===0?[248,250,252]:[255,255,255]);
     sf('bold', 8); tc([0,0,0]);
-    tx(pf.nr+'.', ML+2, y+4);
+    tx(pf.nr+'.', ML+2, y+4.5);
     sf('normal', 7); tc([80,80,80]);
-    tx(pf.af, ML+10, y+4);
+    tx(pf.af, ML+10, y+4.5);
     sf(pf.isLF?'bold':'normal', 8.5);
     tc(pf.isLF?[30,64,175]:pf.pruef?[60,60,60]:[180,180,180]);
-    tx(pf.name, ML+24, y+4);
+    tx(pf.name, ML+24, y+4.5);
     if (pf.typ) {
-      sf('normal', 6.5);
+      sf('normal', 6);
       tc(pf.isLF?[30,64,175]:[109,40,217]);
-      tx(pf.typ, ML+68, y+2.2);
+      tx(pf.typ, ML+68, y+2.8);
       sf('bold', 7);
-      tx(pf.pruef, ML+68, y+5.2);
+      tx(pf.pruef, ML+68, y+5.5);
     }
     tc([0,0,0]); lw(0.15);
-    ln(ML, y+5.5, ML+PF_W, y+5.5, [200,200,200]);
-    y += 5.5;
+    ln(ML, y+PF_ROW_H, ML+PF_W, y+PF_ROW_H, [200,200,200]);
+    y += PF_ROW_H;
   }
   const pfY1 = y;
 
@@ -1989,18 +1990,7 @@ function _buildWahlbogenPDF() {
   tx('Kein offizielles Dokument — maßgeblich ist allein die aktuelle Prüfungsordnung Ihrer Schule.', ML, y);
   tc([0,0,0]); y += 7;
 
-  // ══ UNTERSCHRIFT ═════════════════════════════════════════════
-  sf('normal', 8);
-  tx('Ich bestätige die Richtigkeit meiner Angaben.', ML, y);
-  y += 8;
-  const sigW = (CW-10)/2;
-  lw(0.3);
-  ln(ML, y+4, ML+sigW, y+4);
-  ln(ML+sigW+10, y+4, ML+sigW+10+sigW, y+4);
-  sf('normal', 7); tc([100,100,100]);
-  tx('Schüler/in  ·  Datum, Unterschrift', ML, y+7.5);
-  tx('Erziehungsberechtigte/r', ML+sigW+10, y+7.5);
-  tc([0,0,0]);
+
 
   // ══ FOOTER ═══════════════════════════════════════════════════
   const nPages = doc.getNumberOfPages();
