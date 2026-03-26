@@ -159,7 +159,7 @@
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
     <div>
       <h1 class="text-xl font-bold">🎓 Abitur BW 2028 – Notenrechner</h1>
-      <p class="text-blue-200 text-sm mt-0.5">Allgemeinbildendes Gymnasium · Qualifikationsphase · Alle Daten bleiben lokal in deinem Browser</p>
+      <p class="text-blue-200 text-sm mt-0.5">Alle Daten bleiben lokal in deinem Browser</p>
     </div>
     <div class="flex items-center gap-2">
       <button onclick="saveState()"
@@ -1070,9 +1070,7 @@ function renderCourseOverview() {
   const rows = subs.filter(sub => !extraIds.includes(sub.id)).map(sub => {
     const b1 = inBlock1.has(sub.id);
     const tag = sub.isLF
-      ? doubled.includes(sub.id)
-        ? `<span class="text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded" title="Leistungsfach (doppelt gewichtet)">LF ×2</span>`
-        : `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded" title="Leistungsfach">LF</span>`
+      ? `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded" title="Leistungsfach">LF</span>`
       : mpfIds.includes(sub.id)
         ? `<span class="text-xs font-bold text-violet-700 bg-violet-100 border border-violet-200 px-1.5 py-0.5 rounded" title="Geprüftes Basisfach (mündliche Prüfung)">BF</span>`
         : sub.mandatory
