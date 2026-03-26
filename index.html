@@ -170,9 +170,9 @@
         📂 Laden
         <input type="file" accept=".json" class="hidden" onchange="loadState(event)">
       </label>
-      <button onclick="generateWahlbogen()"
-              class="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
-        📋 Wahlbogen
+      <button id="pdf-export-btn" onclick="generateWahlbogen()"
+              class="hidden flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
+        📄 PDF Export
       </button>
       <button onclick="resetState()"
               class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
@@ -1427,6 +1427,12 @@ function renderAll() {
   renderBlock1();
   renderBlock2();
   renderResult();
+  const pdfExportBtn = document.getElementById('pdf-export-btn');
+  if (pdfExportBtn) {
+    const hasConfigErrors = validateConfig().length > 0;
+    pdfExportBtn.classList.toggle('hidden', hasConfigErrors);
+    pdfExportBtn.classList.toggle('flex', !hasConfigErrors);
+  }
   persistState();
 }
 
