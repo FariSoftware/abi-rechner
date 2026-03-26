@@ -1695,32 +1695,7 @@ function _buildWahlbogenPDF() {
   doc.setTextColor(0, 0, 0);
   y += 16;
 
-  // ── Schülerangaben ───────────────────────────────────────
-  setFont('bold', 9);
-  doc.setTextColor(60, 60, 60);
-  text('SCHÜLERANGABEN', PL, y);
-  doc.setTextColor(0, 0, 0);
-  y += 4;
-
-  const fieldW = (CW - 10) / 2;
-  // Name
-  setFont('normal', 8);
-  doc.setTextColor(100, 100, 100);
-  text('Name, Vorname', PL, y);
-  text('Klasse / Kurs', PL + fieldW + 10, y);
-  doc.setTextColor(0, 0, 0);
-  y += 1;
-  line(PL, y + 3, PL + fieldW, y + 3);
-  line(PL + fieldW + 10, y + 3, PL + fieldW + 10 + fieldW, y + 3);
-  y += 7;
-
-  // Schule
-  doc.setTextColor(100, 100, 100);
-  text('Schule', PL, y);
-  doc.setTextColor(0, 0, 0);
-  y += 1;
-  line(PL, y + 3, W - PR, y + 3);
-  y += 9;
+  y += 2;
 
   // ── Divider ──────────────────────────────────────────────
   const divider = (label) => {
@@ -1736,13 +1711,12 @@ function _buildWahlbogenPDF() {
   divider('PRÜFUNGSFÄCHER (Block II)');
 
   // Tabellenkopf
-  const col = { name: PL, af: PL + 70, typ: PL + 90, leer: PL + 115 };
+  const col = { name: PL, af: PL + 70, typ: PL + 90 };
   setFont('bold', 7.5);
   doc.setTextColor(80, 80, 80);
   text('Fach', col.name, y);
   text('AF', col.af, y);
   text('Art', col.typ, y);
-  text('Bemerkung', col.leer, y);
   doc.setTextColor(0, 0, 0);
   y += 1;
   line(PL - 1, y, W - PR + 1, y, [100, 100, 100]);
@@ -1781,14 +1755,13 @@ function _buildWahlbogenPDF() {
   y += 5;
 
   // Tabellenkopf
-  const c = { name: PL, typ: PL + 62, hj: [PL+82, PL+93, PL+104, PL+115], kurs: PL+128, bemerk: PL+141 };
+  const c = { name: PL, typ: PL + 62, hj: [PL+82, PL+93, PL+104, PL+115], kurs: PL+128 };
   setFont('bold', 7.5);
   doc.setTextColor(80, 80, 80);
   text('Fach', c.name, y);
   text('Typ', c.typ, y);
   for (let i = 0; i < 4; i++) text(`HJ${i+1}`, c.hj[i], y, { align: 'center' });
   text('Kurse', c.kurs, y, { align: 'center' });
-  text('Bemerkung', c.bemerk, y);
   doc.setTextColor(0, 0, 0);
   y += 1;
   line(PL - 1, y, W - PR + 1, y, [100, 100, 100]);
@@ -1850,19 +1823,7 @@ function _buildWahlbogenPDF() {
     text(String(sub.hj), c.kurs + 2, y, { align: 'center' });
     doc.setTextColor(0, 0, 0);
 
-    // Bemerkung (z.B. Seminar)
-    if (sub.isSeminar) {
-      setFont('italic', 7);
-      doc.setTextColor(120,120,120);
-      text('Seminarkurs', c.bemerk, y);
-      doc.setTextColor(0,0,0);
-    }
-    if (sub.mandatoryHj && sub.mandatoryHj < sub.hj) {
-      setFont('italic', 7);
-      doc.setTextColor(120,120,120);
-      text(`mind. ${sub.mandatoryHj} HJ angerechnet`, c.bemerk, y);
-      doc.setTextColor(0,0,0);
-    }
+
 
     y += 6.5;
     rowIdx++;
@@ -1882,21 +1843,7 @@ function _buildWahlbogenPDF() {
   doc.setTextColor(0,0,0);
   y += 5;
 
-  // Unterschriftenzeile
-  checkRow();
-  y += 4;
-  setFont('normal', 8);
-  doc.setTextColor(100,100,100);
-  const sigW = (CW - 15) / 3;
-  text('Ort / Datum', PL, y);
-  text('Unterschrift Schüler/in', PL + sigW + 7, y);
-  text('Unterschrift Eltern', PL + 2*(sigW + 7), y);
-  y += 1;
-  line(PL, y+4, PL + sigW, y+4);
-  line(PL + sigW + 7, y+4, PL + 2*sigW + 7, y+4);
-  line(PL + 2*(sigW+7), y+4, PL + 3*sigW + 7, y+4);
-  doc.setTextColor(0,0,0);
-  y += 12;
+  y += 6;
 
   // ── Footer ───────────────────────────────────────────────
   const pageCount = doc.getNumberOfPages();
