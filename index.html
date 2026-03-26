@@ -512,6 +512,85 @@ function isCoreEligible(id) {
   return id === 'deutsch' || id === 'mathematik' || s.isFS || s.isNW;
 }
 
+// ══════════════════════════════════════════════════════════════
+//  PDF FLOWCHART — LF VALIDATION MATRIX (Seite 10/11)
+//
+//  Kategorien gemäß Flussdiagramm:
+//    D    = Deutsch
+//    M    = Mathematik
+//    FS   = Fremdsprache
+//    NW   = Naturwissenschaft (Bio, Chemie, Physik)
+//    GW   = Gesellschaftswissenschaft (Geschichte, Geo, GK, Wirtschaft, Religion)
+//    KMS  = Kunst / Musik / Sport
+//    FREE = frei (Informatik, NwT, Seminare, ...)
+//
+//  FLOWCHART_LF_RULES[c1] = Set der erlaubten Kategorien für LF2
+//    null  → keine Einschränkung bisher bekannt (TODO: aus PDF ergänzen)
+// ══════════════════════════════════════════════════════════════
+
+const FLOWCHART_LF_RULES = {
+//  LF1 Kategorie  →  erlaubte Kategorien für LF2
+  D:    new Set(['M', 'FS', 'NW']),
+  M:    new Set(['D', 'FS', 'NW']),
+  FS:   new Set(['D', 'M' ,'NW']), 
+  NW:   new Set(['D','M','FS']),         // PDF S.11 bestätigt: LF1=NW → LF2 nur D/M/FS
+};
+
+const LF_CATEGORY_NAME = {
+  D: 'Deutsch', M: 'Mathematik', FS: 'Fremdsprache',
+  NW: 'Naturwissenschaft', GW: 'Gesellschaftswissenschaft',
+  KMS: 'Kunst/Musik/Sport', FREE: 'freies Fach',
+};
+
+function lfCategory(id) {
+  if (!id) return 'FREE';
+  if (id === 'deutsch')    return 'D';
+  if (id === 'mathematik') return 'M';
+  const s = subjectMap[id];
+  if (!s) return 'FREE';
+  if (s.isFS) return 'FS';
+  if (s.isNW) return 'NW';
+  if (['geschichte','geographie','gemeinschaftskunde','wirtschaft','religion'].includes(id)) return 'GW';
+  if (['kunst','musik','sport'].includes(id)) return 'KMS';
+  return 'FREE';
+}
+
+function validateLfFlowchart(lfs) {
+  const errors = [];
+  if (lfs.length < 2) return errors;
+
+  // The matrix defines rules for LF1+LF2 (the two "Kernfächer").
+  // The dropdown order doesn't matter — we check all pairs from the 3 LFs
+  // and accept if at least one valid LF1+LF2 assignment exists.
+  const candidates = lfs.slice(0, lfs.length >= 3 ? 3 : lfs.length);
+  let validPairFound = false;
+
+  for (let i = 0; i < candidates.length; i++) {
+    for (let j = 0; j < candidates.length; j++) {
+      if (i === j) continue;
+      const c1 = lfCategory(candidates[i]);
+      const c2 = lfCategory(candidates[j]);
+      if (!(c1 in FLOWCHART_LF_RULES)) continue;
+      const allowed = FLOWCHART_LF_RULES[c1];
+      if (allowed === null || allowed.has(c2)) {
+        validPairFound = true;
+        break;
+      }
+    }
+    if (validPairFound) break;
+  }
+
+  if (!validPairFound) {
+    errors.push(
+      'Ungültige Leistungsfach-Kombination: ' +
+      'Unter den gewählten LFs muss eine gültige Kombination für LF1 und LF2 möglich sein ' +
+      '(je ein Fach aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft).'
+    );
+  }
+
+  return errors;
+}
+
 function gradeBadgeHtml(pts) {
   if (pts === null || pts === undefined || pts === '') return '<span class="badge bg-gray-100 text-gray-400">–</span>';
   const p = Math.max(0, Math.min(15, parseInt(pts)));
@@ -664,7 +743,7 @@ function computeBestDoubled(allSubs, selectedSlots) {
   for (const combo of combos) {
     let sumAll = 0, sumDoubled = 0, count = 0;
     for (const key of selectedSlots) {
-      const [id, hj] = key.split('_');
+      const [id] = key.split('_');
       const pts = ptVal(key) ?? 0;
       sumAll += pts;
       count++;
@@ -805,10 +884,9 @@ function validateConfig() {
     errors.push({ el: 'lf', msg: 'Mind. 2 LFs müssen aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft stammen.' });
   }
 
-  // PDF S.11 flowchart: if LF1 is a Naturwissenschaft, LF2 must be Deutsch, Mathematik or Fremdsprache.
-  // Therefore LF1+LF2 may not both be Naturwissenschaften.
-  if (lfs.length >= 2 && subjectMap[lfs[0]]?.isNW && subjectMap[lfs[1]]?.isNW) {
-    errors.push({ el: 'lf', msg: 'Ungültige LF-Kombination laut Flussdiagramm: Wenn LF1 eine Naturwissenschaft ist, muss LF2 Deutsch, Mathematik oder eine Fremdsprache sein.' });
+  // PDF flowchart matrix (Seite 10/11) — rules encoded in FLOWCHART_LF_RULES above
+  for (const msg of validateLfFlowchart(lfs)) {
+    errors.push({ el: 'lf', msg });
   }
 
   // All 3 AF covered in Abi
@@ -1075,7 +1153,7 @@ function renderCourseOverview() {
 
 function renderBlock1() {
   const subs = getBlock1Subjects();
-  const { inBlock1, doubled } = calcBlockI();
+  const { inBlock1, doubled, selectedSlots, issues: b1issues } = calcBlockI();
   const el = document.getElementById('block1-rows');
 
   el.innerHTML = subs.map(sub => {
@@ -1097,7 +1175,7 @@ function renderBlock1() {
     const avg = sub.hj > 0 ? sum / sub.hj : 0;
     const avgNote = POINTS_TO_NOTE[Math.round(avg)] || '–';
 
-    const { selectedSlots } = calcBlockI();
+    // selectedSlots already computed above — reuse, do not call calcBlockI() again
     const inputs = Array.from({length: sub.hj}, (_, j) => {
       const key = `${sub.id}_${j+1}`;
       const v = state.grades[key] ?? '';
@@ -1149,8 +1227,7 @@ function renderBlock1() {
 
   // errors
   const errEl = document.getElementById('block1-errors');
-  const { issues } = calcBlockI();
-  errEl.innerHTML = issues.map(m => errorEl(m)).join('');
+  errEl.innerHTML = b1issues.map(m => errorEl(m)).join('');
 }
 
 function renderBlock2() {
