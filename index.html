@@ -805,6 +805,12 @@ function validateConfig() {
     errors.push({ el: 'lf', msg: 'Mind. 2 LFs müssen aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft stammen.' });
   }
 
+  // PDF S.11 flowchart: if LF1 is a Naturwissenschaft, LF2 must be Deutsch, Mathematik or Fremdsprache.
+  // Therefore LF1+LF2 may not both be Naturwissenschaften.
+  if (lfs.length >= 2 && subjectMap[lfs[0]]?.isNW && subjectMap[lfs[1]]?.isNW) {
+    errors.push({ el: 'lf', msg: 'Ungültige LF-Kombination laut Flussdiagramm: Wenn LF1 eine Naturwissenschaft ist, muss LF2 Deutsch, Mathematik oder eine Fremdsprache sein.' });
+  }
+
   // All 3 AF covered in Abi
   const abiSubjects = [...lfs, ...state.mpf.filter(Boolean)];
   const afs = new Set(abiSubjects.map(subjectAF).filter(a => a > 0));
