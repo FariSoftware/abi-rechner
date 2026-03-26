@@ -651,7 +651,8 @@ function calcBlockI() {
   }
 
   const doubledCount = doubled.length * 4;
-  const denominator = coursesInBlock1 + doubledCount;
+  // Denominator is always 40 + doubled courses (PDF formula: fixed, not dependent on actual course count)
+  const denominator = 40 + doubledCount;
   const block1 = denominator > 0 ? Math.round((sumAll + sumDoubled) * 40 / denominator) : 0;
 
   if (totalPlanned < 42) issues.push(`Mindestens 42 Kurse belegen (aktuell ${totalPlanned})`);
