@@ -664,7 +664,7 @@ function computeBestDoubled(allSubs, selectedSlots) {
   for (const combo of combos) {
     let sumAll = 0, sumDoubled = 0, count = 0;
     for (const key of selectedSlots) {
-      const [id, hj] = key.split('_');
+      const [id] = key.split('_');
       const pts = ptVal(key) ?? 0;
       sumAll += pts;
       count++;
@@ -1075,7 +1075,7 @@ function renderCourseOverview() {
 
 function renderBlock1() {
   const subs = getBlock1Subjects();
-  const { inBlock1, doubled } = calcBlockI();
+  const { inBlock1, doubled, selectedSlots, issues: b1issues } = calcBlockI();
   const el = document.getElementById('block1-rows');
 
   el.innerHTML = subs.map(sub => {
@@ -1097,7 +1097,7 @@ function renderBlock1() {
     const avg = sub.hj > 0 ? sum / sub.hj : 0;
     const avgNote = POINTS_TO_NOTE[Math.round(avg)] || '–';
 
-    const { selectedSlots } = calcBlockI();
+    // selectedSlots already computed above — reuse, do not call calcBlockI() again
     const inputs = Array.from({length: sub.hj}, (_, j) => {
       const key = `${sub.id}_${j+1}`;
       const v = state.grades[key] ?? '';
@@ -1149,8 +1149,7 @@ function renderBlock1() {
 
   // errors
   const errEl = document.getElementById('block1-errors');
-  const { issues } = calcBlockI();
-  errEl.innerHTML = issues.map(m => errorEl(m)).join('');
+  errEl.innerHTML = b1issues.map(m => errorEl(m)).join('');
 }
 
 function renderBlock2() {
