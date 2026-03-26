@@ -1803,22 +1803,6 @@ function _buildWahlbogenPDF() {
   }
   const pfY1 = y;
 
-  // Schülerangaben box (right, same height)
-  lw(0.4); br(SA_X, pfY0, SA_W, pfY1-pfY0, [0,0,0]);
-  fr(SA_X, pfY0, SA_W, 6.5, [200,215,240]);
-  sf('bold', 8); tc([0,0,100]);
-  tx('Schülerangaben', SA_X+SA_W/2, pfY0+4.5, { align:'center' });
-  tc([0,0,0]);
-
-  const saFields = ['Name, Vorname, geb.','Klasse/KG, Tutor','Sprachenfolge, Profil','Konfession','Sch.-ID.'];
-  let fy = pfY0+6.5;
-  for (const f of saFields) {
-    sf('normal', 7); tc([120,120,120]);
-    tx(f, SA_X+2, fy+3.5);
-    lw(0.15); ln(SA_X, fy+5, SA_X+SA_W, fy+5, [180,180,180]);
-    tc([0,0,0]); fy += 5;
-  }
-
   y = pfY1 + 4;
 
   // ══ MAIN TABLE HEADER ═══════════════════════════════════════
@@ -1915,10 +1899,22 @@ function _buildWahlbogenPDF() {
     }
 
     // J1.1 / J1.2 / J2.1 / J2.2 checkboxes
+    // hjStart: 1 = J1 (HJ 1+2), 3 = J2 (HJ 3+4)
     const hjCols = [COL.j11,COL.j12,COL.j21,COL.j22];
+    const hjStart = studentMap[row.id]?.hjStart ?? 1; // 1-based
     for (let i=0; i<4; i++) {
+      const hjIndex = i+1; // 1..4
       const cx = hjCols[i]+5.5-2;
-      const cbS = !st.selected ? 'empty' : i<st.hj ? 'checked' : 'na';
+      let cbS;
+      if (!st.selected) {
+        cbS = 'empty';
+      } else if (hjIndex >= hjStart && hjIndex < hjStart + st.hj) {
+        cbS = 'checked';
+      } else if (st.hj < 4) {
+        cbS = 'na'; // outside the allocated HJ range
+      } else {
+        cbS = 'empty';
+      }
       checkbox(cx, y+1, 3.5, cbS);
     }
 
