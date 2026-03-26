@@ -1037,7 +1037,7 @@ function renderBlock1() {
         <span class="text-xs text-gray-400 sm:hidden">HJ${j+1}</span>
         <input type="number" min="0" max="15" value="${v}" placeholder="–"
                class="pts-input ${sub.isLF ? 'border-blue-200' : b1 ? 'border-green-200' : ''}"
-               onchange="setGrade('${key}', this.value); this.nextElementSibling.innerHTML = gradeBadgeHtml(this.value)">
+               onchange="(function(el){ const c=document.getElementById('block1-rows'); const all=Array.from(c.querySelectorAll('input[type=number]')); const idx=all.indexOf(el); setGrade('${key}', el.value, idx); })(this)">
         <span class="text-xs">${gradeBadgeHtml(v)}</span>
       </div>`;
     }).join('');
@@ -1065,7 +1065,7 @@ function renderBlock1() {
               <span class="text-xs text-gray-400 w-8">HJ${j+1}</span>
               <input type="number" min="0" max="15" value="${v}" placeholder="–"
                      class="pts-input ${sub.isLF ? 'border-blue-200' : ''}"
-                     onchange="setGrade('${key}', this.value); this.nextElementSibling.innerHTML = gradeBadgeHtml(this.value)">
+                     onchange="(function(el){ const c=document.getElementById('block1-rows'); const all=Array.from(c.querySelectorAll('input[type=number]')); const idx=all.indexOf(el); setGrade('${key}', el.value, idx); })(this)">
               <span class="text-xs">${gradeBadgeHtml(v)}</span>
             </div>`;
           }).join('')}
@@ -1275,14 +1275,27 @@ function updateExtraCourse(i, field, val) {
   renderAll();
 }
 
-function setGrade(key, val) {
+function setGrade(key, val, advanceFocus) {
   if (val === '' || val === null) {
     delete state.grades[key];
   } else {
     state.grades[key] = Math.max(0, Math.min(15, parseInt(val)));
   }
   renderResult();
+
+  // Preserve focus across re-render
+  const container = document.getElementById('block1-rows');
+  const inputsBefore = container ? Array.from(container.querySelectorAll('input[type="number"]')) : [];
+  const focusedIdx = inputsBefore.indexOf(document.activeElement);
+
   renderBlock1();
+
+  if (focusedIdx !== -1 || advanceFocus !== undefined) {
+    const inputsAfter = container ? Array.from(container.querySelectorAll('input[type="number"]')) : [];
+    const targetIdx = advanceFocus !== undefined ? advanceFocus : focusedIdx;
+    if (inputsAfter[targetIdx]) inputsAfter[targetIdx].focus();
+  }
+
   persistState();
 }
 
