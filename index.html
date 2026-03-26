@@ -558,23 +558,36 @@ function lfCategory(id) {
 function validateLfFlowchart(lfs) {
   const errors = [];
   if (lfs.length < 2) return errors;
-  const c1 = lfCategory(lfs[0]);
-  const c2 = lfCategory(lfs[1]);
 
-  // If LF1 category has no entry in the matrix, it cannot be LF1 at all.
-  if (!(c1 in FLOWCHART_LF_RULES)) {
-    errors.push(`${subjectName(lfs[0])} darf nicht als LF1 gewählt werden.`);
-    return errors;
+  // The matrix defines rules for LF1+LF2 (the two "Kernfächer").
+  // The dropdown order doesn't matter — we check all pairs from the 3 LFs
+  // and accept if at least one valid LF1+LF2 assignment exists.
+  const candidates = lfs.slice(0, lfs.length >= 3 ? 3 : lfs.length);
+  let validPairFound = false;
+
+  for (let i = 0; i < candidates.length; i++) {
+    for (let j = 0; j < candidates.length; j++) {
+      if (i === j) continue;
+      const c1 = lfCategory(candidates[i]);
+      const c2 = lfCategory(candidates[j]);
+      if (!(c1 in FLOWCHART_LF_RULES)) continue;
+      const allowed = FLOWCHART_LF_RULES[c1];
+      if (allowed === null || allowed.has(c2)) {
+        validPairFound = true;
+        break;
+      }
+    }
+    if (validPairFound) break;
   }
 
-  const allowed = FLOWCHART_LF_RULES[c1];
-  if (allowed !== null && !allowed.has(c2)) {
-    const allowedNames = [...allowed].map(k => LF_CATEGORY_NAME[k]).join(', ');
+  if (!validPairFound) {
     errors.push(
-      `Ungültige Leistungsfach-Kombination: ` +
-      `Wenn LF1 eine ${LF_CATEGORY_NAME[c1]} ist, muss LF2 aus folgendem Bereich stammen: ${allowedNames}.`
+      'Ungültige Leistungsfach-Kombination: ' +
+      'Unter den gewählten LFs muss eine gültige Kombination für LF1 und LF2 möglich sein ' +
+      '(je ein Fach aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft).'
     );
   }
+
   return errors;
 }
 
