@@ -512,6 +512,67 @@ function isCoreEligible(id) {
   return id === 'deutsch' || id === 'mathematik' || s.isFS || s.isNW;
 }
 
+// ══════════════════════════════════════════════════════════════
+//  PDF FLOWCHART — LF VALIDATION MATRIX (Seite 10/11)
+//
+//  Kategorien gemäß Flussdiagramm:
+//    D    = Deutsch
+//    M    = Mathematik
+//    FS   = Fremdsprache
+//    NW   = Naturwissenschaft (Bio, Chemie, Physik)
+//    GW   = Gesellschaftswissenschaft (Geschichte, Geo, GK, Wirtschaft, Religion)
+//    KMS  = Kunst / Musik / Sport
+//    FREE = frei (Informatik, NwT, Seminare, ...)
+//
+//  FLOWCHART_LF_RULES[c1] = Set der erlaubten Kategorien für LF2
+//    null  → keine Einschränkung bisher bekannt (TODO: aus PDF ergänzen)
+// ══════════════════════════════════════════════════════════════
+
+const FLOWCHART_LF_RULES = {
+//  LF1 Kategorie  →  erlaubte Kategorien für LF2
+  D:    null,                           // TODO: aus Flussdiagramm ergänzen
+  M:    null,                           // TODO: aus Flussdiagramm ergänzen
+  FS:   null,                           // TODO: aus Flussdiagramm ergänzen
+  NW:   new Set(['D','M','FS']),         // PDF S.11 bestätigt: LF1=NW → LF2 nur D/M/FS
+  GW:   null,                           // TODO: aus Flussdiagramm ergänzen
+  KMS:  null,                           // TODO: aus Flussdiagramm ergänzen
+  FREE: null,                           // TODO: aus Flussdiagramm ergänzen
+};
+
+const LF_CATEGORY_NAME = {
+  D: 'Deutsch', M: 'Mathematik', FS: 'Fremdsprache',
+  NW: 'Naturwissenschaft', GW: 'Gesellschaftswissenschaft',
+  KMS: 'Kunst/Musik/Sport', FREE: 'freies Fach',
+};
+
+function lfCategory(id) {
+  if (!id) return 'FREE';
+  if (id === 'deutsch')    return 'D';
+  if (id === 'mathematik') return 'M';
+  const s = subjectMap[id];
+  if (!s) return 'FREE';
+  if (s.isFS) return 'FS';
+  if (s.isNW) return 'NW';
+  if (['geschichte','geographie','gemeinschaftskunde','wirtschaft','religion'].includes(id)) return 'GW';
+  if (['kunst','musik','sport'].includes(id)) return 'KMS';
+  return 'FREE';
+}
+
+function validateLfFlowchart(lfs) {
+  const errors = [];
+  if (lfs.length < 2) return errors;
+  const c1 = lfCategory(lfs[0]);
+  const c2 = lfCategory(lfs[1]);
+  const allowed = FLOWCHART_LF_RULES[c1];
+  if (allowed !== null && !allowed.has(c2)) {
+    errors.push(
+      `Ungültige LF-Kombination laut Flussdiagramm: ` +
+      `LF1 ${LF_CATEGORY_NAME[c1]} erlaubt als LF2 nicht ${LF_CATEGORY_NAME[c2]}.`
+    );
+  }
+  return errors;
+}
+
 function gradeBadgeHtml(pts) {
   if (pts === null || pts === undefined || pts === '') return '<span class="badge bg-gray-100 text-gray-400">–</span>';
   const p = Math.max(0, Math.min(15, parseInt(pts)));
@@ -805,10 +866,9 @@ function validateConfig() {
     errors.push({ el: 'lf', msg: 'Mind. 2 LFs müssen aus Deutsch, Mathematik, Fremdsprache oder Naturwissenschaft stammen.' });
   }
 
-  // PDF S.11 flowchart: if LF1 is a Naturwissenschaft, LF2 must be Deutsch, Mathematik or Fremdsprache.
-  // Therefore LF1+LF2 may not both be Naturwissenschaften.
-  if (lfs.length >= 2 && subjectMap[lfs[0]]?.isNW && subjectMap[lfs[1]]?.isNW) {
-    errors.push({ el: 'lf', msg: 'Ungültige LF-Kombination laut Flussdiagramm: Wenn LF1 eine Naturwissenschaft ist, muss LF2 Deutsch, Mathematik oder eine Fremdsprache sein.' });
+  // PDF flowchart matrix (Seite 10/11) — rules encoded in FLOWCHART_LF_RULES above
+  for (const msg of validateLfFlowchart(lfs)) {
+    errors.push({ el: 'lf', msg });
   }
 
   // All 3 AF covered in Abi
