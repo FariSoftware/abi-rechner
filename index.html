@@ -486,7 +486,6 @@ const DEFAULT_STATE = {
   gkHj: 2,              // Gemeinschaftskunde: 2 or 4
   geoStartHj: 1,        // Geographie: 1 = J1 (HJ1+2), 3 = J2 (HJ3+4)
   gkStartHj: 1,         // Gemeinschaftskunde: 1 = J1, 3 = J2
-  kunstMusikStartHj: 1, // Kunst/Musik: 1 = J1 (HJ1+2), 3 = J2 (HJ3+4)
   // Extra courses added manually in Step 3 to reach 40
   extraCourses: [],      // [{ id: string, hj: number }]
   // Grades: { key: number } where key = subjectId_hj (1–4)
@@ -671,7 +670,8 @@ function getBlock1Subjects() {
   add('gemeinschaftskunde', gk_hj,  { mandatory: true, hjStart: gkStart  });
 
   // Kunst/Musik: 4 HJ Belegungspflicht, aber nur 2 HJ Anrechnungspflicht in Block I
-  add(state.kunstMusik || 'kunst', 4, { mandatory: true, mandatoryHj: 2, hjStart: state.kunstMusikStartHj });
+  // hjStart immer 1 (alle 4 HJ werden belegt; die 2 besten werden automatisch gewählt)
+  add(state.kunstMusik || 'kunst', 4, { mandatory: true, mandatoryHj: 2 });
 
   // mündliche PFs — mandatory (4 HJ)
   for (const id of state.mpf) {
@@ -1067,19 +1067,7 @@ function renderCourseOverview() {
     </div>`);
   }
 
-  // Kunst/Musik: J1/J2 toggle (always 4 HJ, but position may vary)
-  if (!lfs.includes('kunst') || !lfs.includes('musik')) {
-    const kmId = state.kunstMusik || 'kunst';
-    if (!lfs.includes(kmId)) {
-      configFields.push(`<div class="flex items-center gap-2">
-        <label class="text-xs font-semibold text-gray-600 whitespace-nowrap">${subjectName(kmId)} (Lage):</label>
-        <select class="border border-gray-200 rounded-lg px-2 py-1 text-sm" onchange="state.kunstMusikStartHj=parseInt(this.value);renderAll()">
-          <option value="1" ${state.kunstMusikStartHj===1?'selected':''}>J1 (HJ1+2)</option>
-          <option value="3" ${state.kunstMusikStartHj===3?'selected':''}>J2 (HJ3+4)</option>
-        </select>
-      </div>`);
-    }
-  }
+
 
   configEl.innerHTML = configFields.length
     ? `<div class="flex flex-wrap gap-3 items-center">${configFields.join('')}</div>`
