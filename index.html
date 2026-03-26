@@ -124,6 +124,10 @@
         📂 Laden
         <input type="file" accept=".json" class="hidden" onchange="loadState(event)">
       </label>
+      <button onclick="resetState()"
+              class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
+        🗑️ Zurücksetzen
+      </button>
     </div>
   </div>
 </header>
@@ -1369,6 +1373,30 @@ function loadState(event) {
   reader.readAsText(file);
   // Reset file input so the same file can be loaded again
   event.target.value = '';
+}
+
+function resetState() {
+  if (!confirm('Alle Noten und Einstellungen zurücksetzen?\nDieser Schritt kann nicht rückgängig gemacht werden.')) return;
+  Object.assign(state, {
+    lf: ['deutsch', 'mathematik', 'englisch'],
+    mpf: ['geschichte', 'biologie'],
+    fs1: 'englisch',
+    nw1: 'biologie',
+    kunstMusik: 'kunst',
+    geoHj: 2,
+    gkHj: 2,
+    extraCourses: [],
+    grades: {},
+    b2: [
+      { schriftlich: null, hasMuendlich: false, muendlich: null },
+      { schriftlich: null, hasMuendlich: false, muendlich: null },
+      { schriftlich: null, hasMuendlich: false, muendlich: null },
+    ],
+    b2mpf: [null, null],
+  });
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  renderAll();
+  showToast('✓ Alle Daten zurückgesetzt');
 }
 
 function showToast(msg, isError = false) {
