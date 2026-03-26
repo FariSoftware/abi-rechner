@@ -1105,9 +1105,15 @@ function renderCourseOverview() {
     const rowBg = b1
       ? 'border-l-2 border-green-400 bg-green-50'
       : 'opacity-60';
-    const hjBadges = Array.from({length: sub.hj}, (_, j) =>
-      `<span class="text-xs text-gray-500 bg-gray-100 px-1 rounded">HJ${(sub.hjStart ?? 1) + j}</span>`
-    ).join(' ');
+    // Fixed 4-slot badge row — spacers for unoccupied HJ positions
+    const hjStart = sub.hjStart ?? 1;
+    const hjBadges = Array.from({length: 4}, (_, j) => {
+      const hjIndex = j + 1;
+      const occupied = hjIndex >= hjStart && hjIndex < hjStart + sub.hj;
+      return occupied
+        ? `<span class="text-xs text-gray-500 bg-gray-100 px-1 rounded w-8 text-center inline-block">HJ${hjIndex}</span>`
+        : `<span class="w-8 inline-block"></span>`;
+    }).join('');
     return `<div class="flex items-center gap-2 py-1 px-2 rounded-lg hover:bg-gray-50 ${rowBg}">
       ${tag}
       <span class="text-sm font-medium flex-1">${subjectName(sub.id)}</span>
