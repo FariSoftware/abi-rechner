@@ -170,6 +170,10 @@
         📂 Laden
         <input type="file" accept=".json" class="hidden" onchange="loadState(event)">
       </label>
+      <button onclick="generateWahlbogen()"
+              class="flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
+        📋 Wahlbogen
+      </button>
       <button onclick="resetState()"
               class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
         🗑️ Zurücksetzen
@@ -1630,6 +1634,283 @@ function toggleResultPanel() {
 
 restoreState();
 renderAll();
+
+// ══════════════════════════════════════════════════════════════
+//  WAHLBOGEN PDF EXPORT
+// ══════════════════════════════════════════════════════════════
+
+function generateWahlbogen() {
+  // Dynamisch laden – nur beim ersten Klick
+  if (typeof window.jspdf === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+    script.onload = () => _buildWahlbogenPDF();
+    script.onerror = () => showToast('⚠ jsPDF konnte nicht geladen werden (kein Internet?)', true);
+    document.head.appendChild(script);
+  } else {
+    _buildWahlbogenPDF();
+  }
+}
+
+function _buildWahlbogenPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const lfs    = state.lf.filter(Boolean);
+  const mpfs   = state.mpf.filter(Boolean);
+  const allSubs = getBlock1Subjects();
+  const totalCourses = allSubs.reduce((s, sub) => s + sub.hj, 0);
+  const today  = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  const W = 210, PL = 15, PR = 15, CW = W - PL - PR; // A4, margins
+  let y = 18;
+
+  // ── Helpers ──────────────────────────────────────────────
+  const setFont = (style = 'normal', size = 10) => { doc.setFont('helvetica', style); doc.setFontSize(size); };
+  const text = (t, x, yy, opts) => doc.text(t, x, yy, opts);
+  const line = (x1, y1, x2, y2, color = [180,180,180]) => {
+    doc.setDrawColor(...color);
+    doc.line(x1, y1, x2, y2);
+  };
+  const rect = (x, yy, w, h, style = 'S', color = [180,180,180]) => {
+    doc.setDrawColor(...color);
+    doc.rect(x, yy, w, h, style);
+  };
+  const fillRect = (x, yy, w, h, color) => {
+    doc.setFillColor(...color);
+    doc.rect(x, yy, w, h, 'F');
+  };
+  const checkRow = () => {
+    if (y > 272) { doc.addPage(); y = 15; }
+  };
+
+  // ── Header ───────────────────────────────────────────────
+  fillRect(PL - 2, y - 7, CW + 4, 14, [30, 58, 138]); // blue-800
+  setFont('bold', 16);
+  doc.setTextColor(255, 255, 255);
+  text('Abitur BW 2028 – Wahlbogen', PL + 1, y);
+  setFont('normal', 9);
+  text('Kurswahl Qualifikationsphase', PL + 1, y + 5);
+  text(`Erstellt: ${today}`, W - PR - 1, y + 5, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+  y += 16;
+
+  // ── Schülerangaben ───────────────────────────────────────
+  setFont('bold', 9);
+  doc.setTextColor(60, 60, 60);
+  text('SCHÜLERANGABEN', PL, y);
+  doc.setTextColor(0, 0, 0);
+  y += 4;
+
+  const fieldW = (CW - 10) / 2;
+  // Name
+  setFont('normal', 8);
+  doc.setTextColor(100, 100, 100);
+  text('Name, Vorname', PL, y);
+  text('Klasse / Kurs', PL + fieldW + 10, y);
+  doc.setTextColor(0, 0, 0);
+  y += 1;
+  line(PL, y + 3, PL + fieldW, y + 3);
+  line(PL + fieldW + 10, y + 3, PL + fieldW + 10 + fieldW, y + 3);
+  y += 7;
+
+  // Schule
+  doc.setTextColor(100, 100, 100);
+  text('Schule', PL, y);
+  doc.setTextColor(0, 0, 0);
+  y += 1;
+  line(PL, y + 3, W - PR, y + 3);
+  y += 9;
+
+  // ── Divider ──────────────────────────────────────────────
+  const divider = (label) => {
+    fillRect(PL - 2, y, CW + 4, 6, [241, 245, 249]); // slate-100
+    setFont('bold', 8);
+    doc.setTextColor(30, 64, 175); // blue-800
+    text(label, PL, y + 4.2);
+    doc.setTextColor(0, 0, 0);
+    y += 8;
+  };
+
+  // ── Prüfungsfächer ───────────────────────────────────────
+  divider('PRÜFUNGSFÄCHER (Block II)');
+
+  // Tabellenkopf
+  const col = { name: PL, af: PL + 70, typ: PL + 90, leer: PL + 115 };
+  setFont('bold', 7.5);
+  doc.setTextColor(80, 80, 80);
+  text('Fach', col.name, y);
+  text('AF', col.af, y);
+  text('Art', col.typ, y);
+  text('Bemerkung', col.leer, y);
+  doc.setTextColor(0, 0, 0);
+  y += 1;
+  line(PL - 1, y, W - PR + 1, y, [100, 100, 100]);
+  y += 3;
+
+  const pruefRows = [
+    ...lfs.map((id, i) => ({ label: subjectName(id), af: `AF ${subjectAF(id) || '–'}`, typ: `LF${i+1} (schriftlich)` })),
+    ...mpfs.map((id, i) => ({ label: subjectName(id), af: `AF ${subjectAF(id) || '–'}`, typ: `mPF${i+1} (mündlich)` })),
+  ];
+
+  for (const row of pruefRows) {
+    checkRow();
+    const rowBg = pruefRows.indexOf(row) % 2 === 0 ? [248,250,252] : [255,255,255];
+    fillRect(PL - 1, y - 3, CW + 2, 6, rowBg);
+    setFont(row.typ.startsWith('LF') ? 'bold' : 'normal', 9);
+    text(row.label, col.name, y);
+    setFont('normal', 8);
+    doc.setTextColor(80, 80, 80);
+    text(row.af, col.af, y);
+    doc.setTextColor(50, 100, 200);
+    text(row.typ, col.typ, y);
+    doc.setTextColor(0, 0, 0);
+    y += 6.5;
+  }
+
+  y += 3;
+
+  // ── Block I Fächerliste ──────────────────────────────────
+  divider('BLOCK I – KURSWAHL QUALIFIKATIONSPHASE');
+
+  // Erläuterung
+  setFont('normal', 7);
+  doc.setTextColor(100, 100, 100);
+  text('LF = Leistungsfach  ·  BF = Geprüftes Basisfach  ·  PF = Pflichtfach  ·  PF* = opt. in Block I  ·  WF = Wahlfach', PL, y);
+  doc.setTextColor(0, 0, 0);
+  y += 5;
+
+  // Tabellenkopf
+  const c = { name: PL, typ: PL + 62, hj: [PL+82, PL+93, PL+104, PL+115], kurs: PL+128, bemerk: PL+141 };
+  setFont('bold', 7.5);
+  doc.setTextColor(80, 80, 80);
+  text('Fach', c.name, y);
+  text('Typ', c.typ, y);
+  for (let i = 0; i < 4; i++) text(`HJ${i+1}`, c.hj[i], y, { align: 'center' });
+  text('Kurse', c.kurs, y, { align: 'center' });
+  text('Bemerkung', c.bemerk, y);
+  doc.setTextColor(0, 0, 0);
+  y += 1;
+  line(PL - 1, y, W - PR + 1, y, [100, 100, 100]);
+  y += 3;
+
+  const mpfIds = state.mpf.filter(Boolean);
+
+  let rowIdx = 0;
+  for (const sub of allSubs) {
+    checkRow();
+
+    const rowBg = rowIdx % 2 === 0 ? [248,250,252] : [255,255,255];
+    fillRect(PL - 1, y - 3, CW + 2, 6.5, rowBg);
+
+    // Fachname
+    setFont(sub.isLF ? 'bold' : 'normal', 9);
+    text(subjectName(sub.id), c.name, y);
+
+    // Typ-Badge
+    let typLabel, typColor;
+    if (sub.isLF)                       { typLabel = 'LF';  typColor = [30,64,175]; }
+    else if (mpfIds.includes(sub.id))   { typLabel = 'BF';  typColor = [109,40,217]; }
+    else if (sub.mandatory)             { typLabel = 'PF';  typColor = [71,85,105]; }
+    else if (sub.isPflicht)             { typLabel = 'PF*'; typColor = [100,116,139]; }
+    else                                { typLabel = 'WF';  typColor = [156,163,175]; }
+
+    const typX = c.typ;
+    fillRect(typX - 0.5, y - 3, 13, 5, [...typColor.map(v => Math.min(v+170,255))]);
+    setFont('bold', 7);
+    doc.setTextColor(...typColor);
+    text(typLabel, typX + 6, y - 0.5, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+
+    // HJ-Kästchen (angekreuzt wenn aktiv, leer wenn Optional)
+    const requiredCount = sub.mandatory ? (sub.mandatoryHj ?? sub.hj) : 0;
+    for (let j = 0; j < 4; j++) {
+      const bx = c.hj[j] - 2.5, by = y - 3.2, bw = 5, bh = 5;
+      if (j < sub.hj) {
+        const isMandatory = j < requiredCount;
+        rect(bx, by, bw, bh, 'S', isMandatory ? [50,100,200] : [160,160,160]);
+        if (isMandatory) {
+          // Häkchen
+          doc.setDrawColor(30, 100, 220);
+          doc.setLineWidth(0.5);
+          doc.line(bx+0.8, by+2.5, bx+2, by+4);
+          doc.line(bx+2, by+4, bx+4.2, by+0.8);
+          doc.setLineWidth(0.2);
+          doc.setDrawColor(180,180,180);
+        }
+      } else {
+        // Außerhalb HJ-Bereich: ausgrauen
+        fillRect(bx, by, 5, 5, [230,230,230]);
+      }
+    }
+
+    // Kurse
+    setFont('bold', 8);
+    doc.setTextColor(30, 64, 175);
+    text(String(sub.hj), c.kurs + 2, y, { align: 'center' });
+    doc.setTextColor(0, 0, 0);
+
+    // Bemerkung (z.B. Seminar)
+    if (sub.isSeminar) {
+      setFont('italic', 7);
+      doc.setTextColor(120,120,120);
+      text('Seminarkurs', c.bemerk, y);
+      doc.setTextColor(0,0,0);
+    }
+    if (sub.mandatoryHj && sub.mandatoryHj < sub.hj) {
+      setFont('italic', 7);
+      doc.setTextColor(120,120,120);
+      text(`mind. ${sub.mandatoryHj} HJ angerechnet`, c.bemerk, y);
+      doc.setTextColor(0,0,0);
+    }
+
+    y += 6.5;
+    rowIdx++;
+  }
+
+  // Linie
+  y += 1;
+  line(PL - 1, y, W - PR + 1, y, [100,100,100]);
+  y += 5;
+
+  // Summe
+  checkRow();
+  setFont('bold', 9);
+  const ok40 = totalCourses >= 40;
+  doc.setTextColor(ok40 ? 22 : 180, ok40 ? 101 : 40, ok40 ? 52 : 40);
+  text(`Gesamt belegte Kurse: ${totalCourses} ${ok40 ? '✓' : '(mind. 40 erforderlich)'}`, PL, y);
+  doc.setTextColor(0,0,0);
+  y += 5;
+
+  // Unterschriftenzeile
+  checkRow();
+  y += 4;
+  setFont('normal', 8);
+  doc.setTextColor(100,100,100);
+  const sigW = (CW - 15) / 3;
+  text('Ort / Datum', PL, y);
+  text('Unterschrift Schüler/in', PL + sigW + 7, y);
+  text('Unterschrift Eltern', PL + 2*(sigW + 7), y);
+  y += 1;
+  line(PL, y+4, PL + sigW, y+4);
+  line(PL + sigW + 7, y+4, PL + 2*sigW + 7, y+4);
+  line(PL + 2*(sigW+7), y+4, PL + 3*sigW + 7, y+4);
+  doc.setTextColor(0,0,0);
+  y += 12;
+
+  // ── Footer ───────────────────────────────────────────────
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    setFont('normal', 7);
+    doc.setTextColor(160,160,160);
+    text(`Erstellt mit abi-rechner.fari-software.de · ${today} · Seite ${i} / ${pageCount}`, W / 2, 290, { align: 'center' });
+    text('⚠ Kein offizielles Dokument. Maßgeblich ist die Prüfungsordnung deiner Schule.', W / 2, 294, { align: 'center' });
+  }
+
+  doc.save(`wahlbogen-abi2028-${today.replace(/\./g, '-')}.pdf`);
+  showToast('✓ Wahlbogen-PDF gespeichert');
+}
 </script>
 </body>
 </html>
