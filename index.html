@@ -560,6 +560,13 @@ function validateLfFlowchart(lfs) {
   if (lfs.length < 2) return errors;
   const c1 = lfCategory(lfs[0]);
   const c2 = lfCategory(lfs[1]);
+
+  // If LF1 category has no entry in the matrix, it cannot be LF1 at all.
+  if (!(c1 in FLOWCHART_LF_RULES)) {
+    errors.push(`${subjectName(lfs[0])} darf nicht als LF1 gewählt werden.`);
+    return errors;
+  }
+
   const allowed = FLOWCHART_LF_RULES[c1];
   if (allowed !== null && !allowed.has(c2)) {
     const allowedNames = [...allowed].map(k => LF_CATEGORY_NAME[k]).join(', ');
