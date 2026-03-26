@@ -1140,8 +1140,8 @@ function renderBlock2() {
     return b2Row('bg-blue-50 border border-blue-100', label, s, b.hasMuendlich ? m : '', b.hasMuendlich,
       wertung,
       b.hasMuendlich && s !== '' && m !== '' ? 'Formel: (2×s + m) / 3 × 4' : 'Formel: s × 4',
-      `state.b2[${i}].schriftlich=this.value;renderAll()`,
-      `state.b2[${i}].muendlich=this.value;renderAll()`,
+      `withFocusRestore('block2-rows', ()=>{state.b2[${i}].schriftlich=this.value;renderAll()})`,
+      `withFocusRestore('block2-rows', ()=>{state.b2[${i}].muendlich=this.value;renderAll()})`,
       `state.b2[${i}].hasMuendlich=this.checked;renderAll()`);
   });
 
@@ -1152,7 +1152,7 @@ function renderBlock2() {
     const label = `<span class="text-gray-800">${subjectName(id) || `mPF ${i+1}`}</span>`;
     return b2Row('bg-gray-50', label, undefined, v, false,
       pts4 !== '–' ? pts4 + ' P' : '–', 'Formel: m × 4',
-      '', `state.b2mpf[${i}]=this.value;renderAll()`, null);
+      '', `withFocusRestore('block2-rows', ()=>{state.b2mpf[${i}]=this.value;renderAll()})`, null);
   });
 
   el.innerHTML = [...lfRows, ...mpfRows].join('');
@@ -1285,6 +1285,28 @@ function visibleBlock1Inputs() {
   if (!container) return [];
   return Array.from(container.querySelectorAll('input[type="number"]'))
     .filter(el => el.offsetParent !== null);
+}
+
+function visibleContainerInputs(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('input[type="number"]'))
+    .filter(el => el.offsetParent !== null);
+}
+
+// Wrap a state-mutating callback with focus preservation for a given container
+function withFocusRestore(containerId, fn) {
+  const inputs = visibleContainerInputs(containerId);
+  const activeEl = document.activeElement;
+  const idx = inputs.indexOf(activeEl);
+  const advance = _tabWasPressed ? 1 : 0;
+  _tabWasPressed = false;
+  fn();
+  if (idx !== -1) {
+    const after = visibleContainerInputs(containerId);
+    const target = after[idx + advance];
+    if (target) target.focus();
+  }
 }
 
 function setGrade(key, val, srcEl) {
