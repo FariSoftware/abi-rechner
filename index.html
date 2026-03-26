@@ -1037,7 +1037,7 @@ function renderBlock1() {
         <span class="text-xs text-gray-400 sm:hidden">HJ${j+1}</span>
         <input type="number" min="0" max="15" value="${v}" placeholder="–"
                class="pts-input ${sub.isLF ? 'border-blue-200' : b1 ? 'border-green-200' : ''}"
-               onchange="(function(el){ const c=document.getElementById('block1-rows'); const all=Array.from(c.querySelectorAll('input[type=number]')); const idx=all.indexOf(el); setGrade('${key}', el.value, idx); })(this)">
+               onchange="setGrade('${key}', this.value, this)">
         <span class="text-xs">${gradeBadgeHtml(v)}</span>
       </div>`;
     }).join('');
@@ -1065,7 +1065,7 @@ function renderBlock1() {
               <span class="text-xs text-gray-400 w-8">HJ${j+1}</span>
               <input type="number" min="0" max="15" value="${v}" placeholder="–"
                      class="pts-input ${sub.isLF ? 'border-blue-200' : ''}"
-                     onchange="(function(el){ const c=document.getElementById('block1-rows'); const all=Array.from(c.querySelectorAll('input[type=number]')); const idx=all.indexOf(el); setGrade('${key}', el.value, idx); })(this)">
+                     onchange="setGrade('${key}', this.value, this)">
               <span class="text-xs">${gradeBadgeHtml(v)}</span>
             </div>`;
           }).join('')}
@@ -1280,7 +1280,14 @@ document.addEventListener('keydown', e => {
   _tabWasPressed = e.key === 'Tab';
 }, true);
 
-function setGrade(key, val, srcIdx) {
+function visibleBlock1Inputs() {
+  const container = document.getElementById('block1-rows');
+  if (!container) return [];
+  return Array.from(container.querySelectorAll('input[type="number"]'))
+    .filter(el => el.offsetParent !== null);
+}
+
+function setGrade(key, val, srcEl) {
   if (val === '' || val === null) {
     delete state.grades[key];
   } else {
@@ -1289,13 +1296,14 @@ function setGrade(key, val, srcIdx) {
   renderResult();
 
   // Restore focus after re-render, advancing by 1 if Tab caused the change
-  if (srcIdx !== undefined) {
+  if (srcEl !== undefined) {
+    const inputsBefore = visibleBlock1Inputs();
+    const srcIdx = inputsBefore.indexOf(srcEl);
     const advance = _tabWasPressed ? 1 : 0;
     _tabWasPressed = false;
     renderBlock1();
-    const container = document.getElementById('block1-rows');
-    const inputs = container ? Array.from(container.querySelectorAll('input[type="number"]')) : [];
-    const target = inputs[srcIdx + advance];
+    const inputsAfter = visibleBlock1Inputs();
+    const target = inputsAfter[srcIdx + advance];
     if (target) target.focus();
   } else {
     renderBlock1();
