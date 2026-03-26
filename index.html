@@ -584,8 +584,8 @@ function getBlock1Subjects() {
   add('geographie',       geo_hj, { mandatory: true });
   add('gemeinschaftskunde', gk_hj, { mandatory: true });
 
-  // Kunst/Musik: nur 2 Kurse Pflicht (laut AGVO §24)
-  add(state.kunstMusik || 'kunst', 2, { mandatory: true });
+  // Kunst/Musik: 4 HJ Belegungspflicht, aber nur 2 HJ Anrechnungspflicht in Block I
+  add(state.kunstMusik || 'kunst', 4, { mandatory: true, mandatoryHj: 2 });
 
   // mündliche PFs — mandatory (4 HJ)
   for (const id of state.mpf) {
@@ -609,25 +609,25 @@ function getBlock1Subjects() {
 // Free slots filled with best individual HJ from optional subjects.
 function selectBlock1Slots(allSubjects) {
   // Step 1: collect mandatory slots
-  const mandatorySlots = []; // { id, hjIndex (1-based), pts }
+  // mandatoryHj (if set) = how many HJ must go into Block I (e.g. Kunst/Musik: 2 of 4)
+  // Remaining HJ of the same subject become optional slots.
+  const mandatorySlots = [];
+  const optionalSlots = [];
+
   for (const sub of allSubjects) {
-    if (!sub.mandatory) continue;
+    const requiredCount = sub.mandatory ? (sub.mandatoryHj ?? sub.hj) : 0;
     for (let j = 1; j <= sub.hj; j++) {
-      mandatorySlots.push({ id: sub.id, hjIndex: j, pts: ptVal(`${sub.id}_${j}`) ?? 0 });
+      const slot = { id: sub.id, hjIndex: j, pts: ptVal(`${sub.id}_${j}`) ?? 0 };
+      if (j <= requiredCount) {
+        mandatorySlots.push(slot);
+      } else {
+        optionalSlots.push(slot);
+      }
     }
   }
 
   const mandatoryCount = mandatorySlots.length;
   const slotsLeft = 40 - mandatoryCount;
-
-  // Step 2: collect all optional individual HJ slots
-  const optionalSlots = [];
-  for (const sub of allSubjects) {
-    if (sub.mandatory) continue;
-    for (let j = 1; j <= sub.hj; j++) {
-      optionalSlots.push({ id: sub.id, hjIndex: j, pts: ptVal(`${sub.id}_${j}`) ?? 0 });
-    }
-  }
 
   // Step 3: sort by points descending, pick best slotsLeft
   optionalSlots.sort((a, b) => b.pts - a.pts);
