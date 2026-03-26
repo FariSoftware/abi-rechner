@@ -768,10 +768,14 @@ function validateConfig() {
     const subs = getBlock1Subjects();
     const subIds = subs.filter(s => s.hj >= 4).map(s => s.id);
     const fsCount = subIds.filter(id => subjectMap[id]?.isFS).length;
-    const nwIds = ['biologie','chemie','physik','informatik','nwt'];
-    const nwCount = subIds.filter(id => nwIds.includes(id)).length;
-    if (fsCount < 2 && nwCount < 2) {
-      errors.push({ el: 'overview', msg: 'Block I muss entweder mind. 2 Fremdsprachen oder mind. 2 Naturwissenschaften (je 4 Kurse) enthalten.' });
+    const realNwIds = ['biologie','chemie','physik'];
+    const extNwIds  = ['informatik','nwt'];
+    const realNwCount = subIds.filter(id => realNwIds.includes(id)).length;
+    const extNwCount  = subIds.filter(id => extNwIds.includes(id)).length;
+    // 2 echte NW, oder 1 echte NW + Informatik/NwT
+    const nwOk = realNwCount >= 2 || (realNwCount >= 1 && extNwCount >= 1);
+    if (fsCount < 2 && !nwOk) {
+      errors.push({ el: 'overview', msg: 'Block I muss entweder mind. 2 Fremdsprachen oder mind. 1 Naturwissenschaft + 1 weitere NW/Informatik/NwT (je 4 Kurse) enthalten.' });
     }
   }
 
