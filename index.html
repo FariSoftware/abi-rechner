@@ -1140,8 +1140,8 @@ function renderBlock2() {
     return b2Row('bg-blue-50 border border-blue-100', label, s, b.hasMuendlich ? m : '', b.hasMuendlich,
       wertung,
       b.hasMuendlich && s !== '' && m !== '' ? 'Formel: (2×s + m) / 3 × 4' : 'Formel: s × 4',
-      `withFocusRestore('block2-rows', ()=>{state.b2[${i}].schriftlich=this.value;renderAll()})`,
-      `withFocusRestore('block2-rows', ()=>{state.b2[${i}].muendlich=this.value;renderAll()})`,
+      `(function(el){withFocusRestore('block2-rows',el,()=>{state.b2[${i}].schriftlich=el.value;renderAll()})})(this)`,
+      `(function(el){withFocusRestore('block2-rows',el,()=>{state.b2[${i}].muendlich=el.value;renderAll()})})(this)`,
       `state.b2[${i}].hasMuendlich=this.checked;renderAll()`);
   });
 
@@ -1152,7 +1152,7 @@ function renderBlock2() {
     const label = `<span class="text-gray-800">${subjectName(id) || `mPF ${i+1}`}</span>`;
     return b2Row('bg-gray-50', label, undefined, v, true,
       pts4 !== '–' ? pts4 + ' P' : '–', 'Formel: m × 4',
-      '', `withFocusRestore('block2-rows', ()=>{state.b2mpf[${i}]=this.value;renderAll()})`, null);
+      '', `(function(el){withFocusRestore('block2-rows',el,()=>{state.b2mpf[${i}]=el.value;renderAll()})})(this)`, null);
   });
 
   el.innerHTML = [...lfRows, ...mpfRows].join('');
@@ -1294,11 +1294,11 @@ function visibleContainerInputs(containerId) {
     .filter(el => el.offsetParent !== null);
 }
 
-// Wrap a state-mutating callback with focus preservation for a given container
-function withFocusRestore(containerId, fn) {
+// Wrap a state-mutating callback with focus preservation for a given container.
+// srcEl: the input element that triggered the change (pass `this` from onchange handler)
+function withFocusRestore(containerId, srcEl, fn) {
   const inputs = visibleContainerInputs(containerId);
-  const activeEl = document.activeElement;
-  const idx = inputs.indexOf(activeEl);
+  const idx = inputs.indexOf(srcEl);
   const advance = _tabWasPressed ? 1 : 0;
   _tabWasPressed = false;
   fn();
