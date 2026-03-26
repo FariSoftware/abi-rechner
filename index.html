@@ -546,104 +546,110 @@ function errorEl(msg, type = 'error') {
 //  BLOCK I SUBJECT LIST (auto-generated from state)
 // ══════════════════════════════════════════════════════════════
 
+// Returns all subjects the student plans, with metadata.
+// isLF / isPflicht / isOptional determine rendering and mandatory logic.
 function getBlock1Subjects() {
   const lfIds = state.lf.filter(Boolean);
   const subjects = [];
+  const seen = new Set();
 
-  // Mandatory in Block I (requiredBlock1: true)
-  const addRequired = (id, hj) => {
-    if (id && !lfIds.includes(id) && !subjects.find(s => s.id === id)) {
-      subjects.push({ id, hj, isLF: false, doubled: false, requiredBlock1: true });
-    }
-  };
-  // Optional for Block I — must be taken, but only included if they improve the grade
-  const addOptional = (id, hj) => {
-    if (id && !lfIds.includes(id) && !subjects.find(s => s.id === id)) {
-      subjects.push({ id, hj, isLF: false, doubled: false, requiredBlock1: false });
-    }
+  const add = (id, hj, props) => {
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    subjects.push({ id, hj, isLF: false, ...props });
   };
 
-  // 3 LFs — always required in Block I
+  // 3 LFs — always mandatory, all 4 HJ
   for (const id of lfIds) {
-    if (id) subjects.push({ id, hj: 4, isLF: true, requiredBlock1: true });
+    if (id && !seen.has(id)) {
+      seen.add(id);
+      subjects.push({ id, hj: 4, isLF: true, mandatory: true });
+    }
   }
 
-  addRequired('deutsch', 4);
-  addRequired('mathematik', 4);
+  // Pflicht-Basisfächer (all 4 HJ mandatory unless already LF)
+  add('deutsch',    4, { mandatory: true });
+  add('mathematik', 4, { mandatory: true });
 
-  // 1. Fremdsprache
   const fs1 = lfIds.find(id => subjectMap[id]?.isFS) || (!lfIds.includes(state.fs1) ? state.fs1 : null);
-  if (fs1 && !lfIds.includes(fs1)) addRequired(fs1, 4);
+  if (fs1 && !lfIds.includes(fs1)) add(fs1, 4, { mandatory: true });
 
-  // Naturwissenschaft
   const nw1 = lfIds.find(id => subjectMap[id]?.isNW) || (!lfIds.includes(state.nw1) ? state.nw1 : null);
-  if (nw1 && !lfIds.includes(nw1)) addRequired(nw1, 4);
+  if (nw1 && !lfIds.includes(nw1)) add(nw1, 4, { mandatory: true });
 
-  addRequired('geschichte', 4);
+  add('geschichte', 4, { mandatory: true });
 
-  // Geographie & Gemeinschaftskunde — min 2, up to 4; forced 4 if mündl. PF
-  const geo_hj = state.mpf.includes('geographie') ? 4 : state.geoHj;
+  const geo_hj = state.mpf.includes('geographie')      ? 4 : state.geoHj;
   const gk_hj  = state.mpf.includes('gemeinschaftskunde') ? 4 : state.gkHj;
-  addRequired('geographie', geo_hj);
-  addRequired('gemeinschaftskunde', gk_hj);
+  add('geographie',       geo_hj, { mandatory: true });
+  add('gemeinschaftskunde', gk_hj, { mandatory: true });
 
-  // Kunst oder Musik
-  addRequired(state.kunstMusik || 'kunst', 4);
+  // Kunst/Musik: nur 2 Kurse Pflicht (laut AGVO §24)
+  add(state.kunstMusik || 'kunst', 2, { mandatory: true });
 
-  // mündliche PFs — required in Block I
+  // mündliche PFs — mandatory (4 HJ)
   for (const id of state.mpf) {
-    if (id && !subjects.find(s => s.id === id)) {
-      subjects.push({ id, hj: 4, isLF: false, doubled: false, requiredBlock1: true });
-    }
+    add(id, 4, { mandatory: true });
   }
 
-  // Religion & Sport — Pflichtfach (must be taken), but optional for Block I
-  if (!lfIds.includes('religion'))
-    subjects.push({ id: 'religion', hj: 4, isLF: false, doubled: false, requiredBlock1: false, isPflicht: true });
-  if (!lfIds.includes('sport'))
-    subjects.push({ id: 'sport', hj: 4, isLF: false, doubled: false, requiredBlock1: false, isPflicht: true });
+  // Religion & Sport — Pflichtbelegung, aber optionale Einzel-HJ für Block I
+  if (!lfIds.includes('religion')) add('religion', 4, { mandatory: false, isPflicht: true });
+  if (!lfIds.includes('sport'))    add('sport',    4, { mandatory: false, isPflicht: true });
 
-  // User-added extra courses — also optional for Block I
+  // Wahlfächer (vom User hinzugefügt)
   for (const extra of state.extraCourses) {
-    if (extra.id && !subjects.find(s => s.id === extra.id)) {
-      subjects.push({ id: extra.id, hj: extra.hj, isLF: false, doubled: false, requiredBlock1: false });
-    }
+    add(extra.id, extra.hj, { mandatory: false });
   }
 
   return subjects;
 }
 
-// Which courses actually end up in Block I?
-// Required ones always in; optional ones: pick best by score to fill to 40.
-function selectBlock1Courses(allSubjects) {
-  const required = allSubjects.filter(s => s.requiredBlock1);
-  const optional = allSubjects.filter(s => !s.requiredBlock1);
-
-  const requiredCount = required.reduce((sum, s) => sum + s.hj, 0);
-  const slotsLeft = 40 - requiredCount;
-
-  // Score each optional subject (sum of grades, avg per course for fair comparison)
-  const scored = optional.map(sub => {
-    const sum = Array.from({length: sub.hj}, (_, j) => ptVal(`${sub.id}_${j+1}`) ?? 0).reduce((a,b)=>a+b,0);
-    return { ...sub, score: sum };
-  }).sort((a, b) => b.score - a.score);
-
-  // Fill slots with best optional courses
-  const included = new Set(required.map(s => s.id));
-  let filled = 0;
-  for (const sub of scored) {
-    if (filled + sub.hj <= slotsLeft) {
-      included.add(sub.id);
-      filled += sub.hj;
+// Returns Set of {id, hjIndex} slots selected for Block I.
+// Mandatory subjects contribute ALL their HJ.
+// Free slots filled with best individual HJ from optional subjects.
+function selectBlock1Slots(allSubjects) {
+  // Step 1: collect mandatory slots
+  const mandatorySlots = []; // { id, hjIndex (1-based), pts }
+  for (const sub of allSubjects) {
+    if (!sub.mandatory) continue;
+    for (let j = 1; j <= sub.hj; j++) {
+      mandatorySlots.push({ id: sub.id, hjIndex: j, pts: ptVal(`${sub.id}_${j}`) ?? 0 });
     }
   }
 
-  return included; // Set of subject IDs in Block I
+  const mandatoryCount = mandatorySlots.length;
+  const slotsLeft = 40 - mandatoryCount;
+
+  // Step 2: collect all optional individual HJ slots
+  const optionalSlots = [];
+  for (const sub of allSubjects) {
+    if (sub.mandatory) continue;
+    for (let j = 1; j <= sub.hj; j++) {
+      optionalSlots.push({ id: sub.id, hjIndex: j, pts: ptVal(`${sub.id}_${j}`) ?? 0 });
+    }
+  }
+
+  // Step 3: sort by points descending, pick best slotsLeft
+  optionalSlots.sort((a, b) => b.pts - a.pts);
+  const filledSlots = optionalSlots.slice(0, Math.max(0, slotsLeft));
+
+  // Combine
+  const allSelected = [...mandatorySlots, ...filledSlots];
+
+  // Return as Set of "id_hj" keys for quick lookup
+  return new Set(allSelected.map(s => `${s.id}_${s.hjIndex}`));
+}
+
+// For rendering: which subjects have at least one HJ in Block I?
+function subjectsInBlock1(allSubjects, selectedSlots) {
+  return new Set(allSubjects.filter(sub =>
+    Array.from({length: sub.hj}, (_, j) => `${sub.id}_${j+1}`).some(k => selectedSlots.has(k))
+  ).map(s => s.id));
 }
 
 // Auto-compute which 2 of 3 LFs yield the highest Block I score.
-// Called inside calcBlockI(); allSubs and inBlock1 are pre-computed to avoid circularity.
-function computeBestDoubled(allSubs, inBlock1) {
+// Works on the selected slot keys.
+function computeBestDoubled(allSubs, selectedSlots) {
   const lfs = state.lf.filter(Boolean);
   if (lfs.length < 2) return lfs.slice(0, 2);
 
@@ -657,22 +663,19 @@ function computeBestDoubled(allSubs, inBlock1) {
 
   for (const combo of combos) {
     let sumAll = 0, sumDoubled = 0, count = 0;
-    for (const sub of allSubs) {
-      if (!inBlock1.has(sub.id)) continue;
-      const isDoubled = combo.includes(sub.id);
-      for (let hj = 1; hj <= sub.hj; hj++) {
-        const pts = ptVal(`${sub.id}_${hj}`) ?? 0;
-        sumAll += pts;
-        count++;
-        if (isDoubled) sumDoubled += pts;
-      }
+    for (const key of selectedSlots) {
+      const [id, hj] = key.split('_');
+      const pts = ptVal(key) ?? 0;
+      sumAll += pts;
+      count++;
+      if (combo.includes(id)) sumDoubled += pts;
     }
-    const denom = count + combo.length * 4;
+    const denom = 40 + combo.length * 4;
     const score = denom > 0 ? (sumAll + sumDoubled) / denom : 0;
     if (score > bestScore) { bestScore = score; bestCombo = combo; }
   }
 
-  return bestCombo; // array of 2 subject IDs
+  return bestCombo;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -682,40 +685,39 @@ function computeBestDoubled(allSubs, inBlock1) {
 function calcBlockI() {
   const allSubs = getBlock1Subjects();
   const totalPlanned = allSubs.reduce((sum, s) => sum + s.hj, 0);
-  const inBlock1 = selectBlock1Courses(allSubs);
+
+  // Select individual HJ slots: mandatory all, optional best-scoring until 40
+  const selectedSlots = selectBlock1Slots(allSubs);         // Set of "id_hjIndex" keys
+  const inBlock1 = subjectsInBlock1(allSubs, selectedSlots); // Set of subject IDs (for rendering)
 
   // Auto-select the 2 LFs that yield the best Block I score
-  const doubled = computeBestDoubled(allSubs, inBlock1);
+  const doubled = computeBestDoubled(allSubs, selectedSlots);
 
-  let sumAll = 0, sumDoubled = 0, coursesInBlock1 = 0;
+  let sumAll = 0, sumDoubled = 0;
   let unterpunktet = 0, unterpunktetLF = 0, hasZero = false;
   const issues = [];
 
-  for (const sub of allSubs) {
-    if (!inBlock1.has(sub.id)) continue;
-    const isDoubled = doubled.includes(sub.id);
-    for (let hj = 1; hj <= sub.hj; hj++) {
-      const v = ptVal(`${sub.id}_${hj}`);
-      const pts = v === null ? 0 : v;
-      sumAll += pts;
-      coursesInBlock1++;
-      if (isDoubled) sumDoubled += pts;
-      if (pts < 5) { unterpunktet++; if (sub.isLF) unterpunktetLF++; }
-      if (pts === 0) hasZero = true;
-    }
+  for (const key of selectedSlots) {
+    const [id] = key.split('_');
+    const sub = allSubs.find(s => s.id === id);
+    const pts = ptVal(key) ?? 0;
+    sumAll += pts;
+    if (doubled.includes(id)) sumDoubled += pts;
+    if (pts < 5) { unterpunktet++; if (sub?.isLF) unterpunktetLF++; }
+    if (pts === 0) hasZero = true;
   }
 
-  // Denominator: 40 fixed Kurse + 4 extra per doubled LF (BW Abi PDF formula)
   const denominator = 40 + doubled.length * 4;
   const block1 = denominator > 0 ? Math.round((sumAll + sumDoubled) * 40 / denominator) : 0;
+  const totalCourses = selectedSlots.size;
 
-  if (totalPlanned < 42) issues.push(`Mindestens 42 Kurse belegen (aktuell ${totalPlanned})`);
+  if (totalPlanned < 40) issues.push(`Mindestens 40 Kurse belegen (aktuell ${totalPlanned})`);
   if (unterpunktet > 8) issues.push(`Block I: ${unterpunktet} Kurse unter 5 Punkten (max. 8 erlaubt)`);
   if (unterpunktetLF > 3) issues.push(`Block I: ${unterpunktetLF} LF-Kurse unter 5 Punkten (max. 3 erlaubt)`);
   if (hasZero) issues.push('Block I: Kein Kurs darf 0 Punkte haben');
   if (block1 < 200) issues.push(`Block I: Mindestens 200 Punkte nötig (aktuell ${block1})`);
 
-  return { block1, totalPlanned, coursesInBlock1, inBlock1, doubled, issues };
+  return { block1, totalPlanned, totalCourses, selectedSlots, inBlock1, doubled, issues };
 }
 
 function calcBlockII() {
@@ -965,7 +967,7 @@ function renderCourseOverview() {
 
   const subs = getBlock1Subjects();
   const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
-  const MIN_COURSES = 42;
+  const MIN_COURSES = 40;
 
   const counterEl = document.getElementById('course-counter');
   const ok = totalCourses >= MIN_COURSES;
@@ -989,7 +991,7 @@ function renderCourseOverview() {
         : `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded" title="Leistungsfach">LF</span>`
       : mpfIds.includes(sub.id)
         ? `<span class="text-xs font-bold text-violet-700 bg-violet-100 border border-violet-200 px-1.5 py-0.5 rounded" title="Geprüftes Basisfach (mündliche Prüfung)">BF</span>`
-        : sub.requiredBlock1
+        : sub.mandatory
           ? `<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded" title="Pflichtfach">PF</span>`
           : sub.isPflicht
             ? `<span class="text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded" title="Pflichtfach, optional in Block I">PF*</span>`
@@ -1054,7 +1056,7 @@ function renderCourseOverview() {
     </div>
     <div class="flex items-center justify-between text-xs text-gray-400">
       <span>davon in Block I eingebracht</span>
-      <span class="font-semibold text-gray-600">${inBlock1.size > 0 ? [...inBlock1].reduce((s,id) => s + (subs.find(x=>x.id===id)?.hj||0), 0) : '–'} / 40</span>
+      <span class="font-semibold text-gray-600">${calcBlockI().selectedSlots.size || '–'} / 40</span>
     </div>
   </div>`;
 
@@ -1080,7 +1082,7 @@ function renderBlock1() {
         : `<span class="text-xs font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded" title="Leistungsfach">LF</span>`
       : b1MpfIds.includes(sub.id)
         ? `<span class="text-xs font-bold text-violet-700 bg-violet-100 border border-violet-200 px-1 rounded" title="Geprüftes Basisfach">BF</span>`
-        : sub.requiredBlock1
+        : sub.mandatory
           ? `<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-1 rounded" title="Pflichtfach">PF</span>`
           : sub.isPflicht
             ? `<span class="text-xs font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-1 rounded" title="Pflichtfach, optional in Block I">PF*</span>`
@@ -1089,13 +1091,19 @@ function renderBlock1() {
     const avg = sub.hj > 0 ? sum / sub.hj : 0;
     const avgNote = POINTS_TO_NOTE[Math.round(avg)] || '–';
 
+    const { selectedSlots } = calcBlockI();
     const inputs = Array.from({length: sub.hj}, (_, j) => {
       const key = `${sub.id}_${j+1}`;
       const v = state.grades[key] ?? '';
-      return `<div class="flex flex-col items-center gap-0.5">
-        <span class="text-xs text-gray-400 sm:hidden">HJ${j+1}</span>
+      const hjInBlock1 = selectedSlots.has(key);
+      const borderCls = sub.isLF ? 'border-blue-200' : hjInBlock1 ? 'border-green-300' : 'border-gray-200';
+      const hjLabel = hjInBlock1
+        ? `<span class="text-xs text-green-600 font-bold sm:hidden">HJ${j+1} ✓</span>`
+        : `<span class="text-xs text-gray-400 sm:hidden">HJ${j+1}</span>`;
+      return `<div class="flex flex-col items-center gap-0.5 ${hjInBlock1 ? '' : 'opacity-50'}">
+        ${hjLabel}
         <input type="number" min="0" max="15" value="${v}" placeholder="–"
-               class="pts-input ${sub.isLF ? 'border-blue-200' : b1 ? 'border-green-200' : ''}"
+               class="pts-input ${borderCls}"
                onchange="setGrade('${key}', this.value, this)">
         <span class="text-xs">${gradeBadgeHtml(v)}</span>
       </div>`;
