@@ -1782,8 +1782,8 @@ function _buildWahlbogenPDF() {
   tc([0,0,0]); y += 5;
 
   const pruefFaecher = [
-    ...lfs.map((id,i) => ({ nr:i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), pruef:'schriftlich', isLF:true })),
-    ...mpfs.map((id,i) => ({ nr:lfs.length+i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), pruef:'mündlich', isLF:false })),
+    ...lfs.map((id,i) => ({ nr:i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), typ:'Leistungsfach', pruef:'schriftlich', isLF:true })),
+    ...mpfs.map((id,i) => ({ nr:lfs.length+i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), typ:'Basisfach', pruef:'mündlich', isLF:false })),
   ];
   while (pruefFaecher.length < 5) pruefFaecher.push({ nr:pruefFaecher.length+1, af:'', name:'', pruef:'', isLF:false });
 
@@ -1796,10 +1796,12 @@ function _buildWahlbogenPDF() {
     sf(pf.isLF?'bold':'normal', 8.5);
     tc(pf.isLF?[30,64,175]:pf.pruef?[60,60,60]:[180,180,180]);
     tx(pf.name, ML+24, y+4);
-    if (pf.pruef) {
-      sf('bold', 7);
+    if (pf.typ) {
+      sf('normal', 6.5);
       tc(pf.isLF?[30,64,175]:[109,40,217]);
-      tx(pf.pruef, ML+68, y+4);
+      tx(pf.typ, ML+68, y+2.2);
+      sf('bold', 7);
+      tx(pf.pruef, ML+68, y+5.2);
     }
     tc([0,0,0]); lw(0.15);
     ln(ML, y+5.5, ML+PF_W, y+5.5, [200,200,200]);
