@@ -565,9 +565,10 @@ function validateLfFlowchart(lfs) {
   const c2 = lfCategory(lfs[1]);
   const allowed = FLOWCHART_LF_RULES[c1];
   if (allowed !== null && !allowed.has(c2)) {
+    const allowedNames = [...allowed].map(k => LF_CATEGORY_NAME[k]).join(', ');
     errors.push(
-      `Ungültige LF-Kombination laut Flussdiagramm: ` +
-      `LF1 ${LF_CATEGORY_NAME[c1]} erlaubt als LF2 nicht ${LF_CATEGORY_NAME[c2]}.`
+      `Ungültige Leistungsfach-Kombination: ` +
+      `Wenn LF1 eine ${LF_CATEGORY_NAME[c1]} ist, muss LF2 aus folgendem Bereich stammen: ${allowedNames}.`
     );
   }
   return errors;
