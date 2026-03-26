@@ -1777,29 +1777,33 @@ function _buildWahlbogenPDF() {
 
   sf('bold', 6.5); tc([80,80,80]);
   tx('Nr.', ML+2, y+3.5); tx('(L)', ML+10, y+3.5);
-  tx('Fach', ML+24, y+3.5); tx('s/m', ML+72, y+3.5);
+  tx('Fach', ML+24, y+3.5); tx('Prüfung', ML+68, y+3.5);
   lw(0.25); ln(ML, y+5, ML+PF_W, y+5, [150,150,150]);
   tc([0,0,0]); y += 5;
 
   const pruefFaecher = [
-    ...lfs.map((id,i) => ({ nr:i+1, af:`(${['I','II','III'][subjectAF(id)-1]||'?'})`, name:subjectName(id), sm:'s' })),
-    ...mpfs.map((id,i) => ({ nr:lfs.length+i+1, af:'', name:subjectName(id), sm:'m**' })),
+    ...lfs.map((id,i) => ({ nr:i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), pruef:'schriftlich', isLF:true })),
+    ...mpfs.map((id,i) => ({ nr:lfs.length+i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), pruef:'mündlich', isLF:false })),
   ];
-  while (pruefFaecher.length < 5) pruefFaecher.push({ nr:pruefFaecher.length+1, af:'', name:'', sm:'' });
+  while (pruefFaecher.length < 5) pruefFaecher.push({ nr:pruefFaecher.length+1, af:'', name:'', pruef:'', isLF:false });
 
   for (const pf of pruefFaecher) {
-    fr(ML, y, PF_W, 5, pf.nr%2===0?[248,250,252]:[255,255,255]);
+    fr(ML, y, PF_W, 5.5, pf.nr%2===0?[248,250,252]:[255,255,255]);
     sf('bold', 8); tc([0,0,0]);
-    tx(pf.nr+'.', ML+2, y+3.5);
+    tx(pf.nr+'.', ML+2, y+4);
     sf('normal', 7); tc([80,80,80]);
-    tx(pf.af, ML+10, y+3.5);
-    sf(pf.sm==='s'?'bold':'normal', 8.5); tc(pf.sm==='s'?[30,64,175]:[60,60,60]);
-    tx(pf.name, ML+24, y+3.5);
-    sf('bold', 7.5); tc([109,40,217]);
-    tx(pf.sm, ML+72, y+3.5);
+    tx(pf.af, ML+10, y+4);
+    sf(pf.isLF?'bold':'normal', 8.5);
+    tc(pf.isLF?[30,64,175]:pf.pruef?[60,60,60]:[180,180,180]);
+    tx(pf.name, ML+24, y+4);
+    if (pf.pruef) {
+      sf('bold', 7);
+      tc(pf.isLF?[30,64,175]:[109,40,217]);
+      tx(pf.pruef, ML+68, y+4);
+    }
     tc([0,0,0]); lw(0.15);
-    ln(ML, y+5, ML+PF_W, y+5, [200,200,200]);
-    y += 5;
+    ln(ML, y+5.5, ML+PF_W, y+5.5, [200,200,200]);
+    y += 5.5;
   }
   const pfY1 = y;
 
