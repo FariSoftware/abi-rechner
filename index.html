@@ -1212,7 +1212,7 @@ function renderBlock1() {
       const v = state.grades[key] ?? '';
       const hjInBlock1 = selectedSlots.has(key);
       const borderCls = sub.isLF ? 'border-blue-200' : hjInBlock1 ? 'border-green-300' : 'border-gray-200';
-      return `<div class="flex flex-col items-center gap-0.5 ${hjInBlock1 ? '' : 'opacity-40'}">
+      return `<div class="w-14 flex flex-col items-center gap-0.5 ${hjInBlock1 ? '' : 'opacity-40'}">
         <input type="number" min="0" max="15" value="${v}" placeholder="–"
                class="pts-input ${borderCls}"
                onchange="setGrade('${key}', this.value, this)">
