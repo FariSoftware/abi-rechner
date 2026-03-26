@@ -1275,7 +1275,12 @@ function updateExtraCourse(i, field, val) {
   renderAll();
 }
 
-function setGrade(key, val, advanceFocus) {
+let _tabWasPressed = false;
+document.addEventListener('keydown', e => {
+  _tabWasPressed = e.key === 'Tab';
+}, true);
+
+function setGrade(key, val, srcIdx) {
   if (val === '' || val === null) {
     delete state.grades[key];
   } else {
@@ -1283,17 +1288,17 @@ function setGrade(key, val, advanceFocus) {
   }
   renderResult();
 
-  // Preserve focus across re-render
-  const container = document.getElementById('block1-rows');
-  const inputsBefore = container ? Array.from(container.querySelectorAll('input[type="number"]')) : [];
-  const focusedIdx = inputsBefore.indexOf(document.activeElement);
-
-  renderBlock1();
-
-  if (focusedIdx !== -1 || advanceFocus !== undefined) {
-    const inputsAfter = container ? Array.from(container.querySelectorAll('input[type="number"]')) : [];
-    const targetIdx = advanceFocus !== undefined ? advanceFocus : focusedIdx;
-    if (inputsAfter[targetIdx]) inputsAfter[targetIdx].focus();
+  // Restore focus after re-render, advancing by 1 if Tab caused the change
+  if (srcIdx !== undefined) {
+    const advance = _tabWasPressed ? 1 : 0;
+    _tabWasPressed = false;
+    renderBlock1();
+    const container = document.getElementById('block1-rows');
+    const inputs = container ? Array.from(container.querySelectorAll('input[type="number"]')) : [];
+    const target = inputs[srcIdx + advance];
+    if (target) target.focus();
+  } else {
+    renderBlock1();
   }
 
   persistState();
