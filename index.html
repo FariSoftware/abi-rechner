@@ -919,6 +919,14 @@ function validateConfig() {
     errors.push({ el: 'mpf', msg: 'Mathematik muss Prüfungsfach sein (schriftlich als LF oder mündlich).' });
   }
 
+  // Geo/GK als mPF nur möglich wenn 4 HJ belegt werden (Leitfaden S. 9)
+  if (state.mpf.includes('geographie') && state.geoHj < 4) {
+    errors.push({ el: 'mpf', msg: `Geographie kann nur als mündl. PF gewählt werden, wenn 4 Halbjahre belegt werden (aktuell: ${state.geoHj} HJ).` });
+  }
+  if (state.mpf.includes('gemeinschaftskunde') && state.gkHj < 4) {
+    errors.push({ el: 'mpf', msg: `Gemeinschaftskunde kann nur als mündl. PF gewählt werden, wenn 4 Halbjahre belegt werden (aktuell: ${state.gkHj} HJ).` });
+  }
+
   // Block I: entweder 2 FS mit je 4 Kursen ODER 2 NW (inkl. Informatik/NwT) mit je 4 Kursen
   if (lfs.length === 3) {
     const subs = getBlock1Subjects();
