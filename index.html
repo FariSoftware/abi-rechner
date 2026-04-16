@@ -513,6 +513,13 @@ const state = structuredClone(DEFAULT_STATE);
 function subjectName(id) { return subjectMap[id] ? subjectMap[id].name : id; }
 function subjectAF(id) { return subjectMap[id] ? subjectMap[id].af : AF.NONE; }
 function isLFEligible(id) { return subjectMap[id]?.lfOk ?? false; }
+function wochenstundenForSub(sub) {
+  if (sub.isLF) return 5;
+  const s = subjectMap[sub.id];
+  if (s?.isSeminar) return 3;
+  if (sub.id === 'deutsch' || s?.isFS || sub.id === 'mathematik' || s?.isNW) return 3;
+  return 2;
+}
 function isCoreEligible(id) {
   const s = subjectMap[id];
   if (!s) return false;
@@ -1090,6 +1097,16 @@ function renderCourseOverview() {
   const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
   const MIN_COURSES = 40;
 
+  const wsPerHJ = [0, 0, 0, 0];
+  for (const sub of subs) {
+    const ws = wochenstundenForSub(sub);
+    const start = sub.hjStart ?? 1;
+    for (let j = 0; j < sub.hj; j++) {
+      const hjIndex = start + j;
+      if (hjIndex >= 1 && hjIndex <= 4) wsPerHJ[hjIndex - 1] += ws;
+    }
+  }
+
   const counterEl = document.getElementById('course-counter');
   const ok = totalCourses >= MIN_COURSES;
   counterEl.innerHTML = ok
@@ -1174,6 +1191,10 @@ function renderCourseOverview() {
       <p class="text-xs text-gray-400">💡 Seminarkurse (Seminar 1–3) werden automatisch auf 2 Halbjahre gesetzt und zählen als 2 Kurse in Block I.</p>
     </div>`;
 
+  const wsBadges = wsPerHJ.map((ws, i) =>
+    `<span class="text-xs font-semibold text-gray-600">HJ${i+1}:</span><span class="text-xs font-bold bg-gray-100 px-1.5 py-0.5 rounded">${ws}</span>`
+  ).join(' ');
+
   const summary = `<div class="mt-3 pt-3 border-t space-y-1">
     <div class="flex items-center justify-between">
       <span class="text-sm font-semibold text-gray-600">Gesamt belegte Kurse</span>
@@ -1182,6 +1203,10 @@ function renderCourseOverview() {
     <div class="flex items-center justify-between text-xs text-gray-400">
       <span>davon in Block I eingebracht</span>
       <span class="font-semibold text-gray-600">${calcBlockI().selectedSlots.size || '–'} / 40</span>
+    </div>
+    <div class="flex items-center justify-between text-xs text-gray-400">
+      <span>Σ Wochenstunden pro HJ</span>
+      <span class="flex items-center gap-1">${wsBadges}</span>
     </div>
   </div>`;
 
