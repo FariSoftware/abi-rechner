@@ -259,7 +259,7 @@
       </li>
       <li class="flex items-start gap-2">
         <span class="w-5 h-5 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
-        <span>Block-I-Kurse zusammenstellen (mind.&nbsp;40)</span>
+        <span>Block-I-Kurse zusammenstellen (mind.&nbsp;42)</span>
       </li>
       <li class="flex items-start gap-2">
         <span class="w-5 h-5 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
@@ -321,7 +321,7 @@
       </div>
       <div id="step3-body" class="step-body px-5 pb-5">
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 mb-4">
-          <span>Überblick über Block-I-Kurse. Genau 40 werden eingebracht</span>
+          <span>Überblick über belegte Kurse (mind. 42). Genau 40 werden in Block I eingebracht</span>
           <span class="text-gray-300">·</span>
           <span class="font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">LF</span> Leistungsfach
           <span class="font-bold text-amber-700 bg-amber-100 border border-amber-300 px-1.5 py-0.5 rounded">LF ×2</span> doppelt gewichtet
@@ -1103,6 +1103,12 @@ function validateConfig() {
     if (fsCount < 2 && !nwOk) {
       errors.push({ el: 'overview', msg: 'Block I muss entweder mind. 2 Fremdsprachen oder mind. 1 Naturwissenschaft + 1 weitere NW/Informatik/NwT (je 4 Kurse) enthalten.' });
     }
+
+    // Belegungspflicht: mind. 42 Kurse (12 LF + mind. 30 weitere, Leitfaden §1.2.4)
+    const totalBelegt = subs.reduce((s, sub) => s + sub.hj, 0);
+    if (totalBelegt < 42) {
+      errors.push({ el: 'overview', msg: `Belegungspflicht: ${totalBelegt} von mindestens 42 Kursen belegt. Füge noch ${42 - totalBelegt} Kurs${42 - totalBelegt !== 1 ? 'e' : ''} hinzu.` });
+    }
   }
 
   return errors;
@@ -1252,7 +1258,7 @@ function renderCourseOverview() {
 
   const subs = getBlock1Subjects();
   const totalCourses = subs.reduce((s, sub) => s + sub.hj, 0);
-  const MIN_COURSES = 40;
+  const MIN_COURSES = 42;
 
   const wsPerHJ = [0, 0, 0, 0];
   for (const sub of subs) {
