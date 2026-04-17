@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Abitur BW 2028 – Notenrechner</title>
-  <meta name="description" content="Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Block I, Block II und Gesamtergebnis einfach berechnen — kein Login, keine Daten werden gespeichert." />
+  <meta name="description" content="Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Block I, Block II und Gesamtergebnis einfach berechnen — kein Login, deine Eingaben bleiben lokal im Browser." />
 
   <!-- Canonical -->
   <link rel="canonical" href="https://farisoftware.github.io/abi-rechner/" />
@@ -13,7 +13,7 @@
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://farisoftware.github.io/abi-rechner/" />
   <meta property="og:title"       content="Abitur BW 2028 – Notenrechner" />
-  <meta property="og:description" content="Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Block I, Block II und Gesamtergebnis einfach berechnen — kein Login, keine Daten werden gespeichert." />
+  <meta property="og:description" content="Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Block I, Block II und Gesamtergebnis einfach berechnen — kein Login, deine Eingaben bleiben lokal im Browser." />
   <meta property="og:locale"      content="de_DE" />
   <meta property="og:site_name"   content="Abi-Rechner BW" />
 
@@ -80,6 +80,8 @@
     /* iOS zoom prevention: inputs must be 16px+ */
     input[type=number] { font-size: 1rem; }
     .pts-input:focus { outline: 2px solid #3b82f6; border-color: transparent; }
+    /* Active row highlighting */
+    .grade-row-wrap:focus-within { background: #eff6ff !important; box-shadow: inset 3px 0 0 #3b82f6; }
 
     .badge {
       display: inline-flex; align-items: center; justify-content: center;
@@ -159,7 +161,7 @@
   <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
     <div>
       <h1 class="text-xl font-bold">🎓 Abitur BW 2028 – Notenrechner</h1>
-      <p class="text-blue-200 text-sm mt-0.5">Alle Daten bleiben lokal in deinem Browser</p>
+      <p class="text-blue-200 text-sm mt-0.5">Deine Fächer und Noten bleiben lokal in deinem Browser</p>
     </div>
     <div class="flex items-center gap-2">
       <button onclick="saveState()"
@@ -191,10 +193,36 @@
   </div>
 </div>
 
+<!-- ══ ONBOARDING CARD ══ -->
+<div class="max-w-7xl mx-auto px-3 pt-3 pb-0">
+  <div class="bg-blue-50 border border-blue-200 rounded-xl px-5 py-4">
+    <p class="font-bold text-blue-800 text-sm mb-2">So funktioniert's</p>
+    <ol class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-blue-900 mb-2">
+      <li class="flex items-start gap-2">
+        <span class="w-5 h-5 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+        <span>Leistungsfächer und mündliche Prüfungsfächer wählen</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <span class="w-5 h-5 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+        <span>Block-I-Kurse zusammenstellen (mind.&nbsp;40)</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <span class="w-5 h-5 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+        <span>Noten eintragen (Block&nbsp;I und Block&nbsp;II)</span>
+      </li>
+      <li class="flex items-start gap-2">
+        <span class="w-5 h-5 rounded-full bg-blue-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
+        <span>Ergebnis und Hinweise rechts prüfen</span>
+      </li>
+    </ol>
+    <p class="text-xs text-blue-600">Dieses Tool dient zur Orientierung und ersetzt keine offizielle Beratung durch deine Schule.</p>
+  </div>
+</div>
+
 <div class="max-w-7xl mx-auto p-3 lg:flex lg:gap-5 lg:items-start">
 
   <!-- ══════════════════════════════════════════════════ MAIN ══ -->
-  <div class="flex-1 min-w-0 space-y-4">
+  <main class="flex-1 min-w-0 space-y-4" role="main">
 
     <!-- ── SCHRITT 1: PRÜFUNGSFÄCHER ── -->
     <div class="bg-white rounded-xl shadow">
@@ -207,22 +235,22 @@
       </div>
       <div id="step1-body" class="step-body px-5 pb-5">
         <!-- Leistungsfächer -->
-        <div class="mb-5">
-          <p class="text-xs font-semibold text-gray-700 mb-1">Leistungsfächer <span class="text-gray-400 font-normal">(3 wählen · mind. 2 aus Deutsch, Mathe, Fremdsprache oder Naturwissenschaft)</span></p>
+        <fieldset class="mb-5">
+          <legend class="text-xs font-semibold text-gray-700 mb-1">Leistungsfächer <span class="text-gray-400 font-normal">(3 wählen · mind. 2 aus Deutsch, Mathe, Fremdsprache oder Naturwissenschaft)</span></legend>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="lf-selects"></div>
-          <div id="lf-errors" class="mt-2 space-y-1"></div>
-        </div>
+          <div id="lf-errors" class="mt-2 space-y-1" role="alert"></div>
+        </fieldset>
         <!-- Mündliche Prüfungsfächer -->
-        <div>
-          <p class="text-sm font-semibold text-gray-700 mb-2">Mündliche Prüfungsfächer <span class="text-gray-400 font-normal">(2 aus Basisfächern)</span></p>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-700 mb-2">Mündliche Prüfungsfächer <span class="text-gray-400 font-normal">(2 aus Basisfächern)</span></legend>
           <div class="space-y-2" id="mpf-selects"></div>
-          <div id="mpf-errors" class="mt-1 space-y-1"></div>
-        </div>
+          <div id="mpf-errors" class="mt-1 space-y-1" role="alert"></div>
+        </fieldset>
         <!-- Basisfach-Konfiguration -->
-        <div class="mt-4 pt-4 border-t border-gray-100">
-          <p class="text-sm font-semibold text-gray-700 mb-2">Pflicht-Basisfächer <span class="text-gray-400 font-normal">(für Block I)</span></p>
+        <fieldset class="mt-4 pt-4 border-t border-gray-100">
+          <legend class="text-sm font-semibold text-gray-700 mb-2">Pflicht-Basisfächer <span class="text-gray-400 font-normal">(für Block I)</span></legend>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3" id="basis-config"></div>
-        </div>
+        </fieldset>
       </div>
     </div>
 
@@ -248,7 +276,7 @@
           <span class="text-gray-400 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded">WF</span> Wahlfach
         </div>
         <div id="overview-config" class="mb-3"></div>
-        <div id="course-overview" class="space-y-1"></div>
+        <div id="course-overview" class="space-y-1.5"></div>
         <div id="overview-errors" class="mt-2 space-y-1"></div>
       </div>
     </div>
@@ -273,7 +301,7 @@
       </p>
 
       <!-- Column headers — widths must match the flex row layout in renderBlock1() -->
-      <div class="hidden sm:flex items-center gap-2 text-xs text-gray-400 font-semibold mb-1 px-3">
+      <div class="hidden sm:flex items-center gap-2 text-xs text-gray-300 font-medium mb-2 px-3">
         <span class="flex-1 min-w-0">Fach</span>
         <span class="w-14 text-center">HJ 1</span>
         <span class="w-14 text-center">HJ 2</span>
@@ -283,8 +311,8 @@
         <span class="w-14 text-center">Ø Note</span>
       </div>
 
-      <div id="block1-rows" class="space-y-1"></div>
-      <div id="block1-errors" class="mt-2 space-y-1"></div>
+      <div id="block1-rows" class="space-y-2" role="list" aria-label="Block I Kursnoten"></div>
+      <div id="block1-errors" class="mt-2 space-y-1" role="alert"></div>
     </div>
 
     <!-- ── SCHRITT 5: BLOCK II ABITURPRÜFUNG ── -->
@@ -298,14 +326,14 @@
         <span>Fach</span><span class="text-center">Schriftlich</span><span class="text-center">Mündlich</span><span></span><span class="text-center">Wertung</span>
       </div>
 
-      <div id="block2-rows" class="space-y-2"></div>
+      <div id="block2-rows" class="space-y-3"></div>
     </div>
 
-  </div><!-- /main -->
+  </main><!-- /main -->
 
   <!-- ══════════════════════════════════════════════════ SIDEBAR ══ -->
   <!-- Hidden on mobile — result shown in sticky bottom bar instead -->
-  <div class="hidden lg:block w-64 flex-shrink-0 self-start lg:sticky lg:top-4">
+  <aside class="hidden lg:block w-64 flex-shrink-0 self-start lg:sticky lg:top-4" aria-label="Ergebnis und Hinweise">
     <div class="space-y-3">
 
       <!-- Result card -->
@@ -344,9 +372,9 @@
         <div id="r-warnings-list" class="space-y-1 text-gray-700"></div>
       </div>
 
-      <p class="text-xs text-gray-400 text-center px-2">Keine Daten werden übertragen. Alles läuft lokal in deinem Browser.</p>
+      <p class="text-xs text-gray-400 text-center px-2">Deine Fächer und Noten bleiben lokal in deinem Browser. Anonyme Nutzungsstatistiken werden per Matomo erhoben (<a href="datenschutz.html" class="underline hover:text-gray-600">Details</a>).</p>
     </div>
-  </div>
+  </aside>
 
 </div><!-- /grid -->
 
@@ -631,8 +659,15 @@ function subjectOpts(excludeIds = [], onlyLF = false) {
 }
 
 function errorEl(msg, type = 'error') {
-  const cls = type === 'warn' ? 'bg-yellow-50 text-yellow-800 border-yellow-200' : 'bg-red-50 text-red-800 border-red-200';
-  return `<div class="text-xs px-3 py-1.5 rounded border ${cls}">${msg}</div>`;
+  const styles = {
+    error: 'bg-red-50 text-red-800 border-red-200',
+    warn:  'bg-yellow-50 text-yellow-800 border-yellow-200',
+    info:  'bg-blue-50 text-blue-700 border-blue-200',
+  };
+  const icons = { error: '✗', warn: '○', info: 'ℹ' };
+  const cls = styles[type] || styles.error;
+  const icon = icons[type] || icons.error;
+  return `<div class="text-xs px-3 py-1.5 rounded border ${cls} flex items-start gap-1.5"><span class="flex-shrink-0 font-bold">${icon}</span><span>${msg}</span></div>`;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -812,11 +847,11 @@ function calcBlockI() {
   const block1 = denominator > 0 ? Math.round((sumAll + sumDoubled) * 40 / denominator) : 0;
   const totalCourses = selectedSlots.size;
 
-  if (totalPlanned < 40) issues.push(`Mindestens 40 Kurse belegen (aktuell ${totalPlanned})`);
-  if (unterpunktet > 8) issues.push(`Block I: ${unterpunktet} Kurse unter 5 Punkten (max. 8 erlaubt)`);
-  if (unterpunktetLF > 3) issues.push(`Block I: ${unterpunktetLF} LF-Kurse unter 5 Punkten (max. 3 erlaubt)`);
-  if (hasZero) issues.push('Block I: Kein Kurs darf 0 Punkte haben');
-  if (block1 < 200) issues.push(`Block I: Mindestens 200 Punkte nötig (aktuell ${block1})`);
+  if (totalPlanned < 40) issues.push({ msg: `Füge noch ${40 - totalPlanned} Kurs${40 - totalPlanned !== 1 ? 'e' : ''} in Block I hinzu (aktuell ${totalPlanned} von 40).`, level: 'info' });
+  if (unterpunktet > 8) issues.push({ msg: `${unterpunktet} Kurse liegen unter 5 Punkten – maximal 8 sind erlaubt. Verbessere ${unterpunktet - 8} Kurs${unterpunktet - 8 !== 1 ? 'e' : ''}.`, level: 'error' });
+  if (unterpunktetLF > 3) issues.push({ msg: `${unterpunktetLF} LF-Kurse liegen unter 5 Punkten – maximal 3 sind erlaubt.`, level: 'error' });
+  if (hasZero) issues.push({ msg: 'Mindestens ein Kurs hat 0 Punkte – kein eingebrachter Kurs darf 0 Punkte haben.', level: 'error' });
+  if (block1 < 200) issues.push({ msg: `Block I: ${block1} von mindestens 200 Punkten erreicht.`, level: sumAll > 0 ? 'error' : 'info' });
 
   return { block1, totalPlanned, totalCourses, selectedSlots, inBlock1, doubled, issues };
 }
@@ -868,17 +903,18 @@ function calcBlockII() {
   }
 
   // Validations
-  if (total < 100) issues.push(`Block II: Mindestens 100 Punkte nötig (aktuell ${total})`);
+  const anyB2Entered = subScores.some(s => s > 0);
+  if (total < 100) issues.push({ msg: `Block II: ${total} von mindestens 100 Punkten erreicht.`, level: anyB2Entered ? 'error' : 'info' });
 
   const above20 = subScores.filter(s => s >= 20).length;
-  if (above20 < 3) issues.push(`Block II: Mind. 3 Fächer ≥ 20 Punkte nötig (aktuell ${above20})`);
+  if (above20 < 3) issues.push({ msg: `Block II: ${above20} von mind. 3 Fächern erreichen ≥ 20 Punkte.`, level: anyB2Entered ? 'error' : 'info' });
 
   // 2 of the ≥20 must be LF
   const lfAbove20 = subScores.slice(0, 3).filter(s => s >= 20).length;
-  if (above20 >= 3 && lfAbove20 < 2) issues.push('Block II: Mind. 2 der 3 LFs müssen ≥ 20 Punkte erreichen');
+  if (above20 >= 3 && lfAbove20 < 2) issues.push({ msg: 'Block II: Mindestens 2 der 3 LFs müssen ≥ 20 Punkte erreichen.', level: 'error' });
 
   const below4 = subScores.filter(s => s < 4).length;
-  if (below4 > 0) issues.push(`Block II: Alle Prüfungsfächer müssen ≥ 4 Punkte (vierfach) erreichen`);
+  if (below4 > 0) issues.push({ msg: `Block II: ${below4} Prüfungsfach${below4 !== 1 ? 'fächer erreichen' : ' erreicht'} nicht die Mindestpunktzahl (≥ 4 vierfach).`, level: 'error' });
 
   return { block2: total, detail, issues };
 }
@@ -965,9 +1001,10 @@ function renderLFSelects() {
     const opts = SUBJECTS.filter(s => s.lfOk)
       .map(s => `<option value="${s.id}" ${s.id === val ? 'selected' : ''}>${s.name}</option>`).join('');
     const afLabel = val ? `<span class="text-xs text-gray-400 ml-1">AF ${subjectAF(val) || '–'}</span>` : '';
+    const selId = `lf-select-${i}`;
     return `<div>
-      <label class="text-xs font-semibold text-gray-600 mb-1 block">LF ${i + 1} ${afLabel}</label>
-      <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+      <label for="${selId}" class="text-xs font-semibold text-gray-600 mb-1 block">LF ${i + 1} ${afLabel}</label>
+      <select id="${selId}" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
               onchange="setLF(${i}, this.value)">
         <option value="">– wählen –</option>${opts}
       </select>
@@ -983,9 +1020,10 @@ function renderMPFSelects() {
     // Exclude LFs (they're schriftlich, not mündlich); duplicates caught by validation
     const opts = SUBJECTS.filter(s => !lfs.includes(s.id))
       .map(s => `<option value="${s.id}" ${s.id === val ? 'selected' : ''}>${s.name}</option>`).join('');
+    const selId = `mpf-select-${i}`;
     return `<div>
-      <label class="text-xs font-semibold text-gray-500 mb-1 block">mPF ${i + 1}</label>
-      <select class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-400"
+      <label for="${selId}" class="text-xs font-semibold text-gray-500 mb-1 block">mPF ${i + 1}</label>
+      <select id="${selId}" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-400"
               onchange="setMPF(${i}, this.value)">
         <option value="">– wählen –</option>${opts}
       </select>
@@ -1258,6 +1296,7 @@ function renderBlock1() {
       const borderCls = sub.isLF ? 'border-blue-200' : hjInBlock1 ? 'border-green-300' : 'border-gray-200';
       return `<div class="w-14 flex flex-col items-center gap-0.5 ${hjInBlock1 ? '' : 'opacity-40'}">
         <input type="number" min="0" max="15" value="${v}" placeholder="–"
+               aria-label="${subjectName(sub.id)} HJ${hjIndex} Punkte"
                class="pts-input ${borderCls}"
                onchange="setGrade('${key}', this.value, this)">
         <span class="text-xs">${gradeBadgeHtml(v)}</span>
@@ -1272,18 +1311,19 @@ function renderBlock1() {
       return `<div class="flex items-center gap-1 ${hjInBlock1 ? '' : 'opacity-40'}">
         <span class="text-xs text-gray-400 w-8">HJ${hjIndex}</span>
         <input type="number" min="0" max="15" value="${v}" placeholder="–"
+               aria-label="${subjectName(sub.id)} HJ${hjIndex} Punkte"
                class="pts-input ${sub.isLF ? 'border-blue-200' : hjInBlock1 ? 'border-green-300' : 'border-gray-200'}"
                onchange="setGrade('${key}', this.value, this)">
         <span class="text-xs">${gradeBadgeHtml(v)}</span>
       </div>`;
     }).join('');
 
-    return `<div class="${rowBg} rounded-lg px-3 py-2">
+    return `<div class="grade-row-wrap ${rowBg} rounded-lg px-3 py-2.5 transition-colors" role="listitem">
       <!-- Desktop: fixed 4-column grid so HJ positions align across all subjects -->
       <div class="hidden sm:flex items-center gap-2">
-        <span class="text-sm font-medium flex items-center gap-1 flex-1 min-w-0">${subjectName(sub.id)} ${lfBadge}</span>
+        <span class="text-sm font-medium flex items-center gap-1.5 flex-1 min-w-0">${subjectName(sub.id)} ${lfBadge}</span>
         ${cells}
-        <span class="text-xs text-gray-500 text-center font-semibold w-8">${sum}</span>
+        <span class="text-xs text-gray-400 text-center font-semibold w-8">${sum}</span>
         <span class="text-xs text-center font-semibold text-gray-600 w-14">${avgNote}</span>
       </div>
       <!-- Mobile: stacked, only occupied HJ -->
@@ -1299,7 +1339,7 @@ function renderBlock1() {
 
   // errors
   const errEl = document.getElementById('block1-errors');
-  errEl.innerHTML = b1issues.map(m => errorEl(m)).join('');
+  errEl.innerHTML = b1issues.map(i => errorEl(i.msg, i.level)).join('');
 }
 
 function renderBlock2() {
@@ -1307,7 +1347,7 @@ function renderBlock2() {
   const el = document.getElementById('block2-rows');
 
   const b2Row = (bgCls, labelHtml, s, m, hasMuendlich, wertung, formula, onChangeS, onChangeM, onChangeCheck) =>
-    `<div class="${bgCls} rounded-lg px-3 py-2">
+    `<div class="grade-row-wrap ${bgCls} rounded-lg px-3 py-2.5 transition-colors">
       <!-- Desktop -->
       <div class="hidden sm:grid gap-2 items-center" style="grid-template-columns:1fr 5rem 5rem 1fr 4rem">
         <span class="text-sm font-semibold">${labelHtml}</span>
@@ -1404,14 +1444,24 @@ function renderResult() {
   if (mbpTotal) mbpTotal.textContent = `${total}`;
 
   const configErrors = validateConfig();
-  const allIssues = [...configErrors.map(e => e.msg), ...b1issues, ...b2issues];
+  const allIssues = [
+    ...configErrors.map(e => ({ msg: e.msg, level: 'warn' })),
+    ...b1issues,
+    ...b2issues,
+  ];
+  const criticalIssues = allIssues.filter(i => i.level === 'error');
+  const infoIssues = allIssues.filter(i => i.level === 'info');
+  const warnIssues = allIssues.filter(i => i.level === 'warn');
 
-  const passed = total >= 300 && block1 >= 200 && block2 >= 100 && allIssues.length === 0;
   const statusEl = document.getElementById('r-status');
   if (allIssues.length === 0 && total >= 300) {
     statusEl.innerHTML = '<span class="text-green-700 bg-green-50 px-2 py-1 rounded">✓ Bestanden</span>';
-  } else if (total > 0) {
+  } else if (criticalIssues.length > 0) {
     statusEl.innerHTML = '<span class="text-red-700 bg-red-50 px-2 py-1 rounded">✗ Nicht bestanden</span>';
+  } else if (total > 0 && warnIssues.length > 0) {
+    statusEl.innerHTML = '<span class="text-orange-700 bg-orange-50 px-2 py-1 rounded">⚠ Prüfe Hinweise</span>';
+  } else if (infoIssues.length > 0) {
+    statusEl.innerHTML = '<span class="text-blue-700 bg-blue-50 px-2 py-1 rounded">○ Noch unvollständig</span>';
   } else {
     statusEl.innerHTML = '';
   }
@@ -1428,17 +1478,35 @@ function renderResult() {
   const mbpDetailEl = document.getElementById('mbp-b2-detail');
   if (mbpDetailEl) mbpDetailEl.innerHTML = detailHtml;
 
-  // Warnings
+  // Warnings — categorized
   const wEl = document.getElementById('r-warnings');
   const wListEl = document.getElementById('r-warnings-list');
   const mbpWarn = document.getElementById('mbp-warnings');
   const mbpWarnList = document.getElementById('mbp-warnings-list');
   if (allIssues.length > 0) {
     wEl.classList.remove('hidden');
-    const issueHtml = allIssues.map(m => `<div>• ${m}</div>`).join('');
-    wListEl.innerHTML = allIssues.map(m => `<div class="text-orange-700">• ${m}</div>`).join('');
+    const colorMap = { error: 'text-red-700', warn: 'text-orange-700', info: 'text-blue-600' };
+    const iconMap = { error: '✗', warn: '○', info: 'ℹ' };
+    const renderIssue = i => `<div class="${colorMap[i.level] || colorMap.warn} flex items-start gap-1"><span class="flex-shrink-0">${iconMap[i.level] || '•'}</span><span>${i.msg}</span></div>`;
+    // Show critical first, then warnings, then info
+    const sorted = [...criticalIssues, ...warnIssues, ...infoIssues];
+    wListEl.innerHTML = sorted.map(renderIssue).join('');
+    // Update heading based on severity
+    const wHeading = wEl.querySelector('h3');
+    if (wHeading) {
+      if (criticalIssues.length > 0) {
+        wHeading.className = 'font-semibold text-red-700 mb-2';
+        wHeading.textContent = '✗ Kritische Hinweise';
+      } else if (warnIssues.length > 0) {
+        wHeading.className = 'font-semibold text-orange-700 mb-2';
+        wHeading.textContent = '⚠ Hinweise';
+      } else {
+        wHeading.className = 'font-semibold text-blue-700 mb-2';
+        wHeading.textContent = 'ℹ Nächste Schritte';
+      }
+    }
     if (mbpWarn) mbpWarn.classList.remove('hidden');
-    if (mbpWarnList) mbpWarnList.innerHTML = issueHtml;
+    if (mbpWarnList) mbpWarnList.innerHTML = sorted.map(i => `<div>${iconMap[i.level] || '•'} ${i.msg}</div>`).join('');
   } else {
     wEl.classList.add('hidden');
     if (mbpWarn) mbpWarn.classList.add('hidden');
