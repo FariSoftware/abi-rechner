@@ -12,7 +12,7 @@ Kurs- & Notenrechner für die gymnasiale Qualifikationsphase in Baden-Württembe
 
 ## Datenschutz
 
-Alle Daten bleiben lokal im Browser. Kein Server, keine Datenbank, kein Tracking.
+Alle eingegebenen Fächer und Noten bleiben lokal im Browser (localStorage). Kein Server, keine Datenbank, kein Login. Anonymisierte Nutzungsstatistiken werden per [Matomo](https://matomo.org/) auf eigenen Servern erhoben (cookiefrei, IP-Anonymisierung). Details siehe [Datenschutzerklärung](https://farisoftware.github.io/abi-rechner/datenschutz.html).
 
 ## Hosting
 
