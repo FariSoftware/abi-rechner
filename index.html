@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Abitur BW 2028 – Notenrechner</title>
-  <meta name="description" content="Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Block I, Block II und Gesamtergebnis einfach berechnen — kein Login, deine Eingaben bleiben lokal im Browser." />
+  <title>Abitur BW 2028 – Kurswahl & Notenrechner für Baden-Württemberg</title>
+  <meta name="description" content="Kostenloser Abitur-Rechner für Baden-Württemberg 2028: Kurswahl planen, Block I & Block II berechnen und Abiturnote ermitteln — kein Login, alles lokal im Browser." />
 
   <!-- Canonical -->
   <link rel="canonical" href="https://farisoftware.github.io/abi-rechner/" />
@@ -12,24 +12,29 @@
   <!-- Open Graph -->
   <meta property="og:type"        content="website" />
   <meta property="og:url"         content="https://farisoftware.github.io/abi-rechner/" />
-  <meta property="og:title"       content="Abitur BW 2028 – Notenrechner" />
-  <meta property="og:description" content="Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Block I, Block II und Gesamtergebnis einfach berechnen — kein Login, deine Eingaben bleiben lokal im Browser." />
+  <meta property="og:title"       content="Abitur BW 2028 – Kurswahl & Notenrechner" />
+  <meta property="og:description" content="Kostenloser Abitur-Rechner für Baden-Württemberg 2028: Kurswahl planen, Block I & Block II berechnen und Abiturnote ermitteln — kein Login, alles lokal im Browser." />
+  <meta property="og:image"       content="https://farisoftware.github.io/abi-rechner/og-image.png" />
+  <meta property="og:image:width"  content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:type"   content="image/png" />
   <meta property="og:locale"      content="de_DE" />
   <meta property="og:site_name"   content="Abi-Rechner BW" />
 
   <!-- Twitter / X Card -->
-  <meta name="twitter:card"        content="summary" />
-  <meta name="twitter:title"       content="Abitur BW 2028 – Notenrechner" />
-  <meta name="twitter:description" content="Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Block I, Block II und Gesamtergebnis einfach berechnen." />
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:image"       content="https://farisoftware.github.io/abi-rechner/og-image.png" />
+  <meta name="twitter:title"       content="Abitur BW 2028 – Kurswahl & Notenrechner" />
+  <meta name="twitter:description" content="Kostenloser Abitur-Rechner für Baden-Württemberg 2028: Kurswahl planen, Block I & Block II berechnen und Abiturnote ermitteln." />
 
   <!-- JSON-LD: WebApplication -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    "name": "Abitur BW 2028 – Notenrechner",
+    "name": "Abitur BW 2028 – Kurswahl & Notenrechner",
     "url": "https://farisoftware.github.io/abi-rechner/",
-    "description": "Kostenloser Abitur-Notenrechner für Baden-Württemberg 2028. Berechnung von Block I, Block II und Gesamtpunktzahl nach aktueller Abiturverordnung.",
+    "description": "Kostenloser Abitur-Rechner für Baden-Württemberg 2028: Kurswahl planen, Block I & Block II berechnen und Abiturnote ermitteln.",
     "applicationCategory": "EducationalApplication",
     "operatingSystem": "Any",
     "offers": {
@@ -47,6 +52,56 @@
       "@type": "Audience",
       "audienceType": "Schüler in Baden-Württemberg"
     }
+  }
+  </script>
+
+  <!-- JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Wie berechnet sich die Abiturnote in Baden-Württemberg 2028?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Die Abiturnote setzt sich aus zwei Blöcken zusammen: Block I (Kursnoten aus den vier Halbjahren, max. 600 Punkte) und Block II (Abiturprüfungen, max. 300 Punkte). Insgesamt sind maximal 900 Punkte möglich, die in eine Note von 1,0 bis 4,0 umgerechnet werden."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Welche Fächer muss ich als Prüfungsfächer wählen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Du wählst fünf Prüfungsfächer: drei schriftliche Leistungsfächer (darunter Deutsch und Mathematik oder eine Fremdsprache) sowie zwei mündliche Prüfungsfächer. Der Abi-Rechner unterstützt dich bei der Kurswahl und prüft automatisch, ob deine Kombination den Vorgaben entspricht."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie viele Punkte brauche ich für eine 1,0 im Abitur BW?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Für die Bestnote 1,0 benötigst du mindestens 823 von 900 möglichen Punkten. Die Mindestpunktzahl zum Bestehen liegt bei 300 Punkten (Note 4,0)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Was ist der Unterschied zwischen Block I und Block II?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Block I umfasst die Kursnoten aus den vier Halbjahren der Kursstufe (maximal 600 Punkte). Block II umfasst die fünf Abiturprüfungen (maximal 300 Punkte). Beide Blöcke zusammen ergeben die Gesamtqualifikation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Werden meine Daten gespeichert?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nein. Alle Eingaben bleiben lokal in deinem Browser gespeichert (localStorage). Es werden keine persönlichen Daten an einen Server übermittelt."
+        }
+      }
+    ]
   }
   </script>
 
@@ -377,6 +432,70 @@
   </aside>
 
 </div><!-- /grid -->
+
+<!-- ══ SEO CONTENT & FAQ ══ -->
+<section class="max-w-7xl mx-auto px-4 mt-10 mb-6">
+  <h2 class="text-lg font-bold text-gray-700 mb-2">Kurswahl und Abiturnote berechnen — Abitur BW 2028</h2>
+  <p class="text-sm text-gray-500 mb-6 max-w-3xl">
+    Dieser Abitur-Rechner hilft dir bei der Kurswahl und der Berechnung deiner Abiturnote nach der aktuellen Verordnung
+    für Baden-Württemberg (Abitur 2028). Wähle deine Prüfungsfächer, trage deine Halbjahresleistungen ein und sieh
+    sofort, wie sich Block&nbsp;I, Block&nbsp;II und deine Gesamtpunktzahl zusammensetzen.
+  </p>
+
+  <h3 class="text-base font-bold text-gray-600 mb-3">Häufige Fragen</h3>
+  <div class="space-y-2 max-w-3xl">
+    <details class="group border border-gray-200 rounded-lg">
+      <summary class="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+        Wie berechnet sich die Abiturnote in BW 2028?
+        <span class="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9662;</span>
+      </summary>
+      <p class="px-4 pb-3 text-sm text-gray-500">
+        Die Abiturnote setzt sich aus zwei Blöcken zusammen: Block&nbsp;I (Kursnoten aus vier Halbjahren, max. 600&nbsp;Punkte)
+        und Block&nbsp;II (Abiturprüfungen, max. 300&nbsp;Punkte). Insgesamt sind maximal 900&nbsp;Punkte möglich,
+        die in eine Note von 1,0 bis 4,0 umgerechnet werden.
+      </p>
+    </details>
+    <details class="group border border-gray-200 rounded-lg">
+      <summary class="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+        Welche Fächer muss ich als Prüfungsfächer wählen?
+        <span class="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9662;</span>
+      </summary>
+      <p class="px-4 pb-3 text-sm text-gray-500">
+        Du wählst fünf Prüfungsfächer: drei schriftliche Leistungsfächer (darunter Deutsch und Mathematik oder eine Fremdsprache)
+        sowie zwei mündliche Prüfungsfächer. Der Abi-Rechner prüft automatisch, ob deine Kombination den Vorgaben entspricht.
+      </p>
+    </details>
+    <details class="group border border-gray-200 rounded-lg">
+      <summary class="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+        Wie viele Punkte brauche ich für eine 1,0?
+        <span class="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9662;</span>
+      </summary>
+      <p class="px-4 pb-3 text-sm text-gray-500">
+        Für die Bestnote 1,0 benötigst du mindestens 823 von 900 möglichen Punkten.
+        Die Mindestpunktzahl zum Bestehen liegt bei 300&nbsp;Punkten (Note 4,0).
+      </p>
+    </details>
+    <details class="group border border-gray-200 rounded-lg">
+      <summary class="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+        Was ist der Unterschied zwischen Block I und Block II?
+        <span class="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9662;</span>
+      </summary>
+      <p class="px-4 pb-3 text-sm text-gray-500">
+        Block&nbsp;I umfasst die Kursnoten aus den vier Halbjahren der Kursstufe (max. 600&nbsp;Punkte).
+        Block&nbsp;II umfasst die fünf Abiturprüfungen (max. 300&nbsp;Punkte). Beide zusammen ergeben die Gesamtqualifikation.
+      </p>
+    </details>
+    <details class="group border border-gray-200 rounded-lg">
+      <summary class="flex items-center justify-between cursor-pointer px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+        Werden meine Daten gespeichert?
+        <span class="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9662;</span>
+      </summary>
+      <p class="px-4 pb-3 text-sm text-gray-500">
+        Nein. Alle Eingaben bleiben lokal in deinem Browser (localStorage). Es werden keine persönlichen Daten an einen Server übermittelt.
+      </p>
+    </details>
+  </div>
+</section>
 
 <!-- ══ FOOTER ══ -->
 <footer class="max-w-7xl mx-auto px-4 py-6 mt-4 text-xs text-gray-400 text-center border-t border-gray-200">
