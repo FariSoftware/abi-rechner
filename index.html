@@ -227,6 +227,10 @@
         📂 Laden
         <input type="file" accept=".json" class="hidden" onchange="loadState(event)">
       </label>
+      <button id="pdf-export-btn" onclick="generateWahlbogen()"
+              class="hidden flex items-center gap-1.5 bg-green-600 hover:bg-green-500 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
+        📄 PDF Export
+      </button>
       <button onclick="resetState()"
               class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold px-3 py-1.5 rounded-lg transition-colors">
         🗑️ Zurücksetzen
@@ -1656,6 +1660,12 @@ function renderAll() {
   renderBlock1();
   renderBlock2();
   renderResult();
+  const pdfExportBtn = document.getElementById('pdf-export-btn');
+  if (pdfExportBtn) {
+    const hasConfigErrors = validateConfig().length > 0;
+    pdfExportBtn.classList.toggle('hidden', hasConfigErrors);
+    pdfExportBtn.classList.toggle('flex', !hasConfigErrors);
+  }
   persistState();
 }
 
@@ -1863,6 +1873,377 @@ function toggleResultPanel() {
 
 restoreState();
 renderAll();
+
+
+// ══════════════════════════════════════════════════════════════
+//  WAHLBOGEN PDF EXPORT
+// ══════════════════════════════════════════════════════════════
+
+function generateWahlbogen() {
+  if (typeof window.jspdf === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+    script.onload = () => _buildWahlbogenPDF();
+    script.onerror = () => showToast('⚠ jsPDF konnte nicht geladen werden (kein Internet?)', true);
+    document.head.appendChild(script);
+  } else {
+    _buildWahlbogenPDF();
+  }
+}
+
+function _buildWahlbogenPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const lfs    = state.lf.filter(Boolean);
+  const mpfs   = state.mpf.filter(Boolean);
+  const today  = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const W = 210, ML = 10, MR = 10, CW = W - ML - MR;
+
+  // ── Helpers ─────────────────────────────────────────────────
+  const sf = (style, size) => { doc.setFont('helvetica', style); doc.setFontSize(size); };
+  const tx = (t, x, y, opts) => doc.text(String(t), x, y, opts || {});
+  const ln = (x1,y1,x2,y2,rgb) => { doc.setDrawColor(...(rgb||[0,0,0])); doc.line(x1,y1,x2,y2); };
+  const fr = (x,y,w,h,rgb) => { doc.setFillColor(...rgb); doc.rect(x,y,w,h,'F'); };
+  const br = (x,y,w,h,rgb) => { doc.setDrawColor(...(rgb||[0,0,0])); doc.rect(x,y,w,h,'S'); };
+  const tc = (rgb) => doc.setTextColor(...rgb);
+  const lw = (w) => doc.setLineWidth(w);
+
+  // Small checkbox: state = 'checked' | 'empty' | 'na'
+  const checkbox = (x, y, size, cbState) => {
+    lw(0.25);
+    if (cbState === 'na') {
+      fr(x,y,size,size,[220,220,220]);
+      doc.setDrawColor(200,200,200); doc.rect(x,y,size,size,'S');
+    } else if (cbState === 'checked') {
+      fr(x,y,size,size,[219,234,254]);
+      doc.setDrawColor(59,130,246); doc.rect(x,y,size,size,'S');
+      lw(0.5); doc.setDrawColor(29,78,216);
+      doc.line(x+0.6, y+size*0.52, x+size*0.4, y+size*0.82);
+      doc.line(x+size*0.4, y+size*0.82, x+size-0.4, y+size*0.18);
+      lw(0.25);
+    } else {
+      doc.setDrawColor(160,160,160); doc.rect(x,y,size,size,'S');
+    }
+  };
+
+  // ── Column positions ─────────────────────────────────────────
+  const COL = {
+    af:   ML,          // width 18 — merged AF label
+    fach: ML+18,       // width 40 — subject name
+    belp: ML+58,       // width 21 — Belegpflicht
+    lb:   ML+79,       // width 11 — Beleg. L/B
+    sm:   ML+90,       // width 11 — Prüf. s/m
+    j11:  ML+101,      // width 11
+    j12:  ML+112,      // width 11
+    j21:  ML+123,      // width 11
+    j22:  ML+134,      // width 11
+    kurs: ML+145,      // width 14
+    end:  ML+CW,
+  };
+  const ROW_H = 5.5;
+
+  // ── Subject catalogue (matches BW Wahlbogen structure) ────────
+  const CATALOGUE = [
+    { af:'I',   id:'deutsch',           name:'Deutsch',                  belegp:'4 Hj.' },
+    { af:'I',   id:'englisch',          name:'Englisch',                 belegp:'4 Hj.' },
+    { af:'I',   id:'franzoesisch',      name:'Französisch',              belegp:'4 Hj.' },
+    { af:'I',   id:'latein',            name:'Latein',                   belegp:'4 Hj.' },
+    { af:'I',   id:'griechisch',        name:'Griechisch',               belegp:'4 Hj.' },
+    { af:'I',   id:'russisch',          name:'Russisch',                 belegp:'4 Hj.' },
+    { af:'I',   id:'spanisch',          name:'Spanisch',                 belegp:'4 Hj.' },
+    { af:'I',   id:'italienisch',       name:'Italienisch',              belegp:'4 Hj.' },
+    { af:'I',   id:'chinesisch',        name:'Chinesisch',               belegp:'4 Hj.' },
+    { af:'I',   id:'kunst',             name:'Bildende Kunst',           belegp:'4 Hj., 1 Fach' },
+    { af:'I',   id:'musik',             name:'Musik',                    belegp:'4 Hj., 1 Fach' },
+    { af:'II',  id:'geschichte',        name:'Geschichte',               belegp:'4 Hj.' },
+    { af:'II',  id:'geographie',        name:'Geographie',               belegp:'2 o. 4 Hj.' },
+    { af:'II',  id:'gemeinschaftskunde',name:'Gemeinschaftskunde',       belegp:'2 o. 4 Hj.' },
+    { af:'II',  id:'religion',          name:'Religionslehre / Ethik',   belegp:'4 Hj.' },
+    { af:'II',  id:'wirtschaft',        name:'Wirtschaft',               belegp:'4 Hj.' },
+    { af:'III', id:'mathematik',        name:'Mathematik',               belegp:'4 Hj.' },
+    { af:'III', id:'biologie',          name:'Biologie',                 belegp:'4 Hj.' },
+    { af:'III', id:'chemie',            name:'Chemie',                   belegp:'4 Hj.' },
+    { af:'III', id:'physik',            name:'Physik',                   belegp:'4 Hj.' },
+    { af:'III', id:'nwt',               name:'NwT',                      belegp:'4 Hj.***' },
+    { af:'*',   id:'sport',             name:'Sport',                    belegp:'4 Hj.' },
+    { af:'W',   id:'informatik',        name:'Informatik',               belegp:'(2 o. 4)' },
+    { af:'W',   id:'seminar_1',         name:'Seminar 1',                belegp:'(2)' },
+    { af:'W',   id:'seminar_2',         name:'Seminar 2',                belegp:'(2)' },
+    { af:'W',   id:'seminar_3',         name:'Seminar 3',                belegp:'(2)' },
+  ];
+
+  // Add extra courses not in catalogue
+  const catalogueIds = new Set(CATALOGUE.map(r => r.id));
+  for (const ec of state.extraCourses) {
+    if (ec.id && !catalogueIds.has(ec.id)) {
+      CATALOGUE.push({ af:'W', id: ec.id, name: subjectName(ec.id), belegp:'' });
+    }
+  }
+
+  const lfsSet  = new Set(lfs);
+  const mpfsSet = new Set(mpfs);
+  const studentSubs = getBlock1Subjects();
+  const studentMap  = Object.fromEntries(studentSubs.map(s => [s.id, s]));
+
+  function stOf(id) {
+    const sub = studentMap[id];
+    if (!sub) return { selected:false, hj:0, isLF:false, isMPF:false };
+    return { selected:true, hj:sub.hj, isLF:lfsSet.has(id), isMPF:mpfsSet.has(id) };
+  }
+
+  let y = 14;
+
+  // ══ TITLE ═══════════════════════════════════════════════════
+  sf('bold', 13); tc([0,0,0]);
+  tx('Kurswahlbogen für die Jahrgangsstufen 1 und 2', W/2, y, { align:'center' });
+  y += 5;
+  sf('normal', 7); tc([80,80,80]);
+  tx('Abitur Baden-Württemberg 2028  ·  abi-rechner.fari-software.de  ·  ' + today + '  ·  Kein offizielles Dokument', W/2, y, { align:'center' });
+  tc([0,0,0]);
+  y += 5;
+
+  // ══ PRÜFUNGSFÄCHER + SCHÜLERANGABEN ═════════════════════════
+  const PF_W = 88, SA_X = ML+PF_W+4, SA_W = CW-PF_W-4;
+  const pfY0 = y;
+
+  // Prüfungsfächer box
+  lw(0.4); br(ML, y, PF_W, 38, [0,0,0]);
+  fr(ML, y, PF_W, 6.5, [200,215,240]);
+  sf('bold', 8); tc([0,0,100]);
+  tx('Prüfungsfächer', ML+PF_W/2, y+4.5, { align:'center' });
+  tc([0,0,0]); y += 6.5;
+
+  sf('bold', 6.5); tc([80,80,80]);
+  tx('Nr.', ML+2, y+3.5); tx('(L)', ML+10, y+3.5);
+  tx('Fach', ML+24, y+3.5); tx('Prüfung', ML+68, y+3.5);
+  lw(0.25); ln(ML, y+5, ML+PF_W, y+5, [150,150,150]);
+  tc([0,0,0]); y += 5;
+
+  const pruefFaecher = [
+    ...lfs.map((id,i) => ({ nr:i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), typ:'Leistungsfach', pruef:'schriftlich', isLF:true })),
+    ...mpfs.map((id,i) => ({ nr:lfs.length+i+1, af:`AF ${subjectAF(id)||'?'}`, name:subjectName(id), typ:'Basisfach', pruef:'mündlich', isLF:false })),
+  ];
+  while (pruefFaecher.length < 5) pruefFaecher.push({ nr:pruefFaecher.length+1, af:'', name:'', pruef:'', isLF:false });
+
+  const PF_ROW_H = 7;
+  for (const pf of pruefFaecher) {
+    fr(ML, y, PF_W, PF_ROW_H, pf.nr%2===0?[248,250,252]:[255,255,255]);
+    sf('bold', 8); tc([0,0,0]);
+    tx(pf.nr+'.', ML+2, y+4.5);
+    sf('normal', 7); tc([80,80,80]);
+    tx(pf.af, ML+10, y+4.5);
+    sf(pf.isLF?'bold':'normal', 8.5);
+    tc(pf.isLF?[30,64,175]:pf.pruef?[60,60,60]:[180,180,180]);
+    tx(pf.name, ML+24, y+4.5);
+    if (pf.typ) {
+      sf('normal', 6);
+      tc(pf.isLF?[30,64,175]:[109,40,217]);
+      tx(pf.typ, ML+68, y+2.8);
+      sf('bold', 7);
+      tx(pf.pruef, ML+68, y+5.5);
+    }
+    tc([0,0,0]); lw(0.15);
+    ln(ML, y+PF_ROW_H, ML+PF_W, y+PF_ROW_H, [200,200,200]);
+    y += PF_ROW_H;
+  }
+  const pfY1 = y;
+
+  y = pfY1 + 4;
+
+  // ══ MAIN TABLE HEADER ═══════════════════════════════════════
+  const TH = 10;
+  lw(0.4); fr(ML, y, CW, TH, [210,220,240]);
+  br(ML, y, CW, TH, [0,0,0]);
+
+  // Vertical dividers in header
+  lw(0.3);
+  for (const x of [COL.fach,COL.belp,COL.lb,COL.sm,COL.j11,COL.j12,COL.j21,COL.j22,COL.kurs]) {
+    ln(x, y, x, y+TH, [80,80,120]);
+  }
+
+  sf('bold', 6.5); tc([0,0,80]);
+  tx('Aufgaben-\nfelder', ML+1, y+3);
+  tx('Fächer', COL.fach+1, y+6);
+  tx('Beleg-\npflicht', COL.belp+1, y+3);
+
+  // Centered col headers
+  const mid = (a,b) => (a+b)/2;
+  tx('Beleg.\nL/B',   mid(COL.lb,COL.sm),   y+3, { align:'center' });
+  tx('Prüf.\ns/m',   mid(COL.sm,COL.j11),   y+3, { align:'center' });
+  tx('Halbjahre',    mid(COL.j11,COL.kurs),  y+3, { align:'center' });
+  tx('J1.1', COL.j11+5.5, y+8, { align:'center' });
+  tx('J1.2', COL.j12+5.5, y+8, { align:'center' });
+  tx('J2.1', COL.j21+5.5, y+8, { align:'center' });
+  tx('J2.2', COL.j22+5.5, y+8, { align:'center' });
+  tx('Zahl\nKurse',  COL.kurs+7,  y+3, { align:'center' });
+  tc([0,0,0]);
+  y += TH;
+
+  // ══ TABLE ROWS ═══════════════════════════════════════════════
+  const VDIVIDERS = [COL.fach,COL.belp,COL.lb,COL.sm,COL.j11,COL.j12,COL.j21,COL.j22,COL.kurs,COL.end];
+  const afLabelMap = {
+    'I':   ['AF I','sprachlich-','literarisch-','künstlerisch'],
+    'II':  ['AF II','gesellschafts-','wissenschaft-','lich'],
+    'III': ['AF III','mathematisch-','naturwiss.-','technisch'],
+    '*':   ['AF*'],
+    'W':   ['Wahl-','bereich','(mögliche','Belegung)'],
+  };
+
+  const afRegions = [];
+  let prevAF = null, afY0 = y;
+  let rowIdx = 0;
+
+  for (const row of CATALOGUE) {
+    if (row.af !== prevAF) {
+      if (prevAF !== null) afRegions.push({ af:prevAF, y0:afY0, y1:y });
+      afY0 = y; prevAF = row.af;
+    }
+
+    const st = stOf(row.id);
+    // Row background
+    let bg;
+    if (st.isLF)       bg = [219,234,254];
+    else if (st.isMPF) bg = [237,233,254];
+    else if (st.selected) bg = [240,253,244];
+    else               bg = rowIdx%2===0 ? [250,250,252] : [255,255,255];
+
+    fr(COL.fach, y, COL.end-COL.fach, ROW_H, bg);
+
+    // Subject name
+    sf(st.isLF?'bold':'normal', st.isLF?8:7.5);
+    tc(st.isLF?[30,64,175]:st.isMPF?[109,40,217]:[0,0,0]);
+    tx(row.name, COL.fach+1.5, y+3.8);
+    tc([0,0,0]);
+
+    // Belegpflicht
+    sf('normal', 6); tc([80,80,80]);
+    tx(row.belegp, COL.belp+1, y+3.8);
+    tc([0,0,0]);
+
+    // Beleg. L/B
+    const lbMid = mid(COL.lb, COL.sm);
+    if (st.selected) {
+      sf('bold', 8); tc(st.isLF ? [30,64,175] : [71,85,105]);
+      tx(st.isLF ? 'L' : 'B', lbMid, y+3.8, { align:'center' });
+      tc([0,0,0]);
+    } else {
+      sf('normal', 7); tc([170,170,170]);
+      tx('–', lbMid, y+3.8, { align:'center' });
+      tc([0,0,0]);
+    }
+
+    // Prüf. s/m
+    const smMid = mid(COL.sm, COL.j11);
+    const isPruef = lfsSet.has(row.id)||mpfsSet.has(row.id);
+    if (isPruef) {
+      sf('bold', 8); tc(lfsSet.has(row.id) ? [30,64,175] : [109,40,217]);
+      tx(lfsSet.has(row.id) ? 's' : 'm', smMid, y+3.8, { align:'center' });
+      tc([0,0,0]);
+    } else {
+      sf('normal', 7); tc([170,170,170]);
+      tx('–', smMid, y+3.8, { align:'center' });
+      tc([0,0,0]);
+    }
+
+    // J1.1 / J1.2 / J2.1 / J2.2 checkboxes
+    // hjStart: 1 = J1 (HJ 1+2), 3 = J2 (HJ 3+4)
+    const hjCols = [COL.j11,COL.j12,COL.j21,COL.j22];
+    const hjStart = studentMap[row.id]?.hjStart ?? 1; // 1-based
+    for (let i=0; i<4; i++) {
+      const hjIndex = i+1; // 1..4
+      const cx = hjCols[i]+5.5-2;
+      let cbS;
+      if (!st.selected) {
+        cbS = 'empty';
+      } else if (hjIndex >= hjStart && hjIndex < hjStart + st.hj) {
+        cbS = 'checked';
+      } else if (st.hj < 4) {
+        cbS = 'na'; // outside the allocated HJ range
+      } else {
+        cbS = 'empty';
+      }
+      checkbox(cx, y+1, 3.5, cbS);
+    }
+
+    // Kurse count
+    if (st.selected) {
+      sf('bold', 8); tc([30,64,175]);
+      tx(st.hj, COL.kurs+7, y+3.8, { align:'center' });
+      tc([0,0,0]);
+    }
+
+    // Row borders
+    lw(0.1);
+    ln(COL.fach, y+ROW_H, COL.end, y+ROW_H, [180,180,190]);
+    for (const vx of VDIVIDERS) ln(vx, y, vx, y+ROW_H, [160,165,185]);
+
+    y += ROW_H;
+    rowIdx++;
+  }
+
+  if (prevAF !== null) afRegions.push({ af:prevAF, y0:afY0, y1:y });
+
+  // Draw merged AF cells
+  for (const reg of afRegions) {
+    const afH = reg.y1-reg.y0;
+    fr(ML, reg.y0, COL.fach-ML, afH, [241,245,249]);
+    lw(0.3); br(ML, reg.y0, COL.fach-ML, afH, [100,100,140]);
+    const lines = afLabelMap[reg.af]||[reg.af];
+    const lineH = 3.2;
+    let ty = reg.y0+(afH-lines.length*lineH)/2+lineH;
+    for (let li=0; li<lines.length; li++) {
+      sf(li===0?'bold':'normal', li===0?7:6);
+      tc(li===0?[30,64,175]:[60,60,60]);
+      tx(lines[li], ML+(COL.fach-ML)/2, ty, { align:'center' });
+      ty += lineH;
+    }
+    tc([0,0,0]);
+  }
+
+  // Outer table border
+  const tableY0 = pfY1+4+TH;
+  lw(0.4); br(ML, tableY0, CW, y-tableY0, [0,0,0]);
+  br(ML, tableY0-TH, CW, TH, [0,0,0]);
+
+  y += 3;
+
+  // ══ SUMME ════════════════════════════════════════════════════
+  const totalCourses = studentSubs.reduce((s,sub)=>s+sub.hj,0);
+  const ok40 = totalCourses >= 40;
+  lw(0.3);
+  fr(ML, y, CW, 6.5, ok40?[220,252,231]:[254,243,199]);
+  br(ML, y, CW, 6.5, [0,0,0]);
+  sf('bold', 8);
+  tc(ok40?[22,101,52]:[146,64,14]);
+  tx('Summen', ML+2, y+4.5);
+  tx((ok40?'✓ ':'⚠ ')+totalCourses+' Kurse '+(ok40?'(≥ 40)':'(mind. 40 erforderlich)'), ML+20, y+4.5);
+  tc([0,0,60]);
+  tx('3 L', COL.lb+mid(0,COL.sm-COL.lb), y+4.5, { align:'center' });
+  tx('5 P', COL.sm+mid(0,COL.j11-COL.sm), y+4.5, { align:'center' });
+  tc([0,0,0]);
+  y += 9;
+
+  // ══ FUSSNOTEN ════════════════════════════════════════════════
+  sf('normal', 6); tc([100,100,100]);
+  tx('* Bitte Zuordnung zu einem Aufgabenfeld (I, II, III) angeben.  ** Endgültige Festlegung Ende 3. Kurshalbjahr.  *** Kann 2. Naturwissenschaft ersetzen.', ML, y);
+  y += 3.5;
+  tx('Kein offizielles Dokument — maßgeblich ist allein die aktuelle Prüfungsordnung Ihrer Schule.', ML, y);
+  tc([0,0,0]); y += 7;
+
+
+
+  // ══ FOOTER ═══════════════════════════════════════════════════
+  const nPages = doc.getNumberOfPages();
+  for (let i=1; i<=nPages; i++) {
+    doc.setPage(i);
+    sf('normal', 6); tc([160,160,160]);
+    tx('Erstellt mit abi-rechner.fari-software.de  ·  '+today+'  ·  Seite '+i+' / '+nPages, W/2, 295, { align:'center' });
+  }
+
+  doc.save('wahlbogen-abi2028-'+today.replace(/\./g,'-')+'.pdf');
+  showToast('✓ Wahlbogen-PDF gespeichert');
+}
 </script>
 </body>
 </html>
