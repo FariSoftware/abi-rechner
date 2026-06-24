@@ -1,0 +1,12 @@
+# cert-manager Certificate for the MCP hostname. dnsNames + secretName are
+# patched per environment in the overlay.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: abi-rechner-mcp-tls
+spec:
+  secretName: abi-rechner-mcp-tls
+  dnsNames: []  # set in overlay
+  issuerRef:
+    name: letsencrypt-prod   # TODO: confirm ClusterIssuer name
+    kind: ClusterIssuer

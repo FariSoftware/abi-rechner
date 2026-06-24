@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: abi-rechner-mcp
+  labels:
+    app.kubernetes.io/name: abi-rechner-mcp
+    app.kubernetes.io/component: mcp
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: abi-rechner-mcp
+      app.kubernetes.io/component: mcp

@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: abi-rechner
+
+resources:
+  - namespace.yaml
+  - ../../base
+
+# Pin an immutable image tag here (e.g. the build SHA). The base uses a
+# placeholder tag that intentionally fails to pull.
+images:
+  - name: ghcr.io/farisoftware/abi-rechner-mcp
+    newTag: REPLACE_WITH_IMMUTABLE_TAG
+
+patches:
+  - path: hostname-patch.yaml

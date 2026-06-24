@@ -1,1 +1,4 @@
 tailwindcss
+node_modules/
+.claude/launch.json
+*.log

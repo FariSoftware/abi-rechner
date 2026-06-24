@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abi-rechner-mcp
+  labels:
+    app.kubernetes.io/name: abi-rechner-mcp
+    app.kubernetes.io/component: mcp
+spec:
+  # Stateless (Streamable HTTP, no sessions) — scale freely. Two replicas
+  # give basic HA; the HPA scales out under load and caps the blast radius
+  # of an open public endpoint.
+  replicas: 2
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: abi-rechner-mcp
+      app.kubernetes.io/component: mcp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: abi-rechner-mcp
+        app.kubernetes.io/component: mcp
+    spec:
+      imagePullSecrets:
+        - name: ghcr
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: abi-rechner-mcp
+              app.kubernetes.io/component: mcp
+      containers:
+        - name: mcp
+          # Overlays MUST pin an immutable tag via their `images:` block.
+          # Deploying base/ directly fails to pull, by design.
+          image: ghcr.io/farisoftware/abi-rechner-mcp:OVERLAY_MUST_PIN_TAG
+          imagePullPolicy: IfNotPresent
+          args: ["mcp/src/server.js", "--http"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 192Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: abi-rechner-mcp
+  labels:
+    app.kubernetes.io/name: abi-rechner-mcp
+    app.kubernetes.io/component: mcp
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: abi-rechner-mcp
+    app.kubernetes.io/component: mcp
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

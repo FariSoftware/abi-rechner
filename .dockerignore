@@ -1,0 +1,8 @@
+**/node_modules
+.git
+.claude
+mcp/test.mjs
+mcp/Dockerfile
+*.png
+*.log
+tailwindcss

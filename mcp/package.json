@@ -1,0 +1,22 @@
+{
+  "name": "abi-rechner-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing the Baden-Württemberg Abitur calculator (abi-core.js) as tools for LLMs.",
+  "type": "module",
+  "bin": {
+    "abi-rechner-mcp": "src/server.js"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "start:http": "node src/server.js --http",
+    "test": "node test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "express": "^5.1.0",
+    "zod": "^3.25.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

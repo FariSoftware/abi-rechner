@@ -1,0 +1,22 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: abi-rechner-mcp
+  labels:
+    app.kubernetes.io/name: abi-rechner-mcp
+    app.kubernetes.io/component: mcp
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: abi-rechner-mcp
+  minReplicas: 2
+  # maxReplicas caps cost/blast-radius for the open public endpoint.
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

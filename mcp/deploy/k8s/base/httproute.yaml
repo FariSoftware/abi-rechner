@@ -1,0 +1,42 @@
+# Gateway API HTTPRoute for the MCP endpoint, attached to the cluster's
+# NGINX Gateway. Adjust parentRefs to the real Gateway/listener; the
+# hostname is set in the overlay (base leaves it empty so the same base
+# can back staging + production).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: abi-rechner-mcp
+spec:
+  parentRefs:
+    - name: intern-gateway        # TODO: confirm Gateway name
+      namespace: nginx-gateway
+      sectionName: https-mcp       # TODO: confirm HTTPS listener name for this host
+  hostnames: []  # set in overlay (e.g. mcp.abirechner.de)
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /mcp
+        - path:
+            type: PathPrefix
+            value: /healthz
+      backendRefs:
+        - name: abi-rechner-mcp
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: abi-rechner-mcp-http-redirect
+spec:
+  parentRefs:
+    - name: intern-gateway
+      namespace: nginx-gateway
+      sectionName: http
+  hostnames: []  # set in overlay
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
