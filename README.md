@@ -1,8 +1,8 @@
 # Zum [Rechner](https://farisoftware.github.io/abi-rechner/)
 
-# Abitur BW 2028 – Notenrechner
+# Abitur BW – Notenrechner
 
-Kurs- & Notenrechner für die gymnasiale Qualifikationsphase in Baden-Württemberg (Abitur 2028).
+Kurs- & Notenrechner für die gymnasiale Qualifikationsphase in Baden-Württemberg.
 
 ## Features
 
