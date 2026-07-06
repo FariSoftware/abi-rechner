@@ -1,0 +1,21 @@
+# Abitur BW – Notenrechner
+
+> Kostenloser Kurs- & Notenrechner für die gymnasiale Qualifikationsphase (Abitur) in Baden-Württemberg. Berechnet Block I und Block II sowie die Abiturnote direkt im Browser, ohne Login oder Server.
+
+Statische Web-App (eine HTML-Datei), gehostet auf GitHub Pages. Nutzer wählen ihre Leistungsfächer und Noten, die App validiert die Kurswahl live und berechnet:
+
+- Block I (40 Kurse, mit Doppelgewichtung)
+- Block II (schriftliche/mündliche Prüfungen, Zusatzmündliche)
+- Die finale Abiturnote sowie Bestanden/Nicht-bestanden aller Bedingungen
+
+Alle Eingaben bleiben lokal im Browser (localStorage) – es gibt keine Server-Komponente und keine Datenbank. Grundlage der Berechnung ist der offizielle Leitfaden für die gymnasiale Oberstufe (Abitur 2028) des Kultusministeriums Baden-Württemberg.
+
+## Docs
+
+- [Rechner](https://farisoftware.github.io/abi-rechner/index.html): Der eigentliche Notenrechner
+- [README](https://github.com/FariSoftware/abi-rechner/blob/main/README.md): Projektbeschreibung und Feature-Übersicht
+- [Datenschutzerklärung](https://farisoftware.github.io/abi-rechner/datenschutz.html): Datenschutzinformationen
+
+## Optional
+
+- [Impressum](https://farisoftware.github.io/abi-rechner/impressum.html): Anbieterkennzeichnung
