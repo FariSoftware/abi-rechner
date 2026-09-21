@@ -2,23 +2,25 @@
 
 # Abitur BW – Notenrechner
 
-Kurs- & Notenrechner für die gymnasiale Qualifikationsphase in Baden-Württemberg.
+Kurs- & Notenrechner für die gymnasiale Qualifikationsphase in Baden-Württemberg. Du planst deine Kurswahl, trägst Noten ein und siehst bei jeder Eingabe, wo du stehst.
 
-## Features
+Der Rechner ist kein offizielles Tool und ersetzt keine Beratung durch die Schule. Er rechnet für allgemein bildende Gymnasien und Gemeinschaftsschulen. Berufliche Gymnasien mit Profilfach deckt er nicht ab.
 
-- Leistungsfächer wählen mit Live-Validierung
-- Block I Berechnung (40 Kurse, Doppelgewichtung)
-- Block II Berechnung (schriftlich/mündlich, Zusatzmündliche)
-- Abiturnote live berechnet
-- Bestanden/Nicht-bestanden Prüfung aller Bedingungen
+## Was er kann
+
+- Leistungsfächer und mündliche Prüfungsfächer wählen. Ungültige Kombinationen meldet er sofort.
+- Block I berechnen: 40 Kurse, zwei Leistungsfächer doppelt gewichtet. Welche zwei, sucht er selbst aus: die mit dem besten Ergebnis.
+- Block II berechnen: schriftliche und mündliche Prüfungen, auch Zusatzmündliche.
+- Die Abiturnote nach jeder Eingabe neu ausrechnen.
+- Alle Bedingungen fürs Bestehen prüfen, etwa die Mindestpunkte je Block und die Grenze von acht Kursen unter 5 Punkten.
 
 ## Datenschutz
 
-Alle eingegebenen Fächer und Noten bleiben lokal im Browser (localStorage). Kein Server, keine Datenbank, kein Login. Anonymisierte Nutzungsstatistiken werden per [Matomo](https://matomo.org/) auf eigenen Servern erhoben (cookiefrei, IP-Anonymisierung). Details siehe [Datenschutzerklärung](https://farisoftware.github.io/abi-rechner/datenschutz.html).
+Fächer und Noten bleiben lokal im Browser (localStorage). Es gibt keinen Server, keine Datenbank und keinen Login. Wir erheben aber anonymisierte Nutzungsstatistiken mit [Matomo](https://matomo.org/) auf eigenen Servern, ohne Cookies und mit gekürzter IP-Adresse. Details stehen in der [Datenschutzerklärung](https://farisoftware.github.io/abi-rechner/datenschutz.html).
 
 ## Hosting
 
-Statische HTML-Datei – läuft auf GitHub Pages oder jedem Webserver.
+Eine statische HTML-Datei. Sie läuft auf GitHub Pages und auf jedem anderen Webserver.
 
 ## Grundlage
 

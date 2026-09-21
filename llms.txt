@@ -2,18 +2,20 @@
 
 > Kostenloser Kurs- & Notenrechner für die gymnasiale Qualifikationsphase (Abitur) in Baden-Württemberg. Berechnet Block I und Block II sowie die Abiturnote direkt im Browser, ohne Login oder Server.
 
-Statische Web-App (eine HTML-Datei), gehostet auf GitHub Pages. Nutzer wählen ihre Leistungsfächer und Noten, die App validiert die Kurswahl live und berechnet:
+Statische Web-App (eine HTML-Datei), gehostet auf GitHub Pages. Nutzer wählen ihre Leistungsfächer und tragen ihre Noten ein. Die App prüft die Kurswahl bei jeder Eingabe und berechnet:
 
-- Block I (40 Kurse, mit Doppelgewichtung)
+- Block I (40 Kurse, zwei Leistungsfächer doppelt gewichtet)
 - Block II (schriftliche/mündliche Prüfungen, Zusatzmündliche)
-- Die finale Abiturnote sowie Bestanden/Nicht-bestanden aller Bedingungen
+- die Abiturnote, und ob alle Bedingungen fürs Bestehen erfüllt sind
 
-Alle Eingaben bleiben lokal im Browser (localStorage) – es gibt keine Server-Komponente und keine Datenbank. Grundlage der Berechnung ist der offizielle Leitfaden für die gymnasiale Oberstufe (Abitur 2028) des Kultusministeriums Baden-Württemberg.
+Alle Eingaben bleiben lokal im Browser (localStorage). Es gibt keine Server-Komponente und keine Datenbank. Wir, die Fari Software GmbH, erheben nur anonyme Nutzungsstatistiken mit Matomo auf eigenen Servern.
+
+Grundlage der Berechnung ist der offizielle Leitfaden für die gymnasiale Oberstufe (Abitur 2028) des Kultusministeriums Baden-Württemberg. Ein offizielles Tool ist der Rechner aber nicht. Er gilt für allgemein bildende Gymnasien und Gemeinschaftsschulen. Berufliche Gymnasien mit Profilfach deckt er nicht ab.
 
 ## Docs
 
-- [Rechner](https://farisoftware.github.io/abi-rechner/index.html): Der eigentliche Notenrechner
-- [README](https://github.com/FariSoftware/abi-rechner/blob/main/README.md): Projektbeschreibung und Feature-Übersicht
+- [Rechner](https://farisoftware.github.io/abi-rechner/index.html): Der Notenrechner selbst
+- [README](https://github.com/FariSoftware/abi-rechner/blob/main/README.md): Projektbeschreibung und Funktionsumfang
 - [Datenschutzerklärung](https://farisoftware.github.io/abi-rechner/datenschutz.html): Datenschutzinformationen
 
 ## Optional
